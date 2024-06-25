@@ -33,4 +33,9 @@ bool IsValidIPV4 (const std::string& text);
 
 bool IsValidIPV6 (const std::string& text);
 
+bool IsValidOnionAddress(const std::string& text);
+
+bool IsValidI2PAddress(const std::string& text);
+ 
+    
 #endif // H_BITCOIN_NAMES_APPLICATIONS

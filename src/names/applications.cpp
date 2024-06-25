@@ -251,7 +251,7 @@ IsValidOnionAddress(const std::string& text){
 }
 
 bool
-IsValidOnionAddress(const std::string& text){
+IsValidI2PAddress(const std::string& text){
     if(!text.ends_with(".i2p")){
         return false;
     } else {
@@ -259,3 +259,5 @@ IsValidOnionAddress(const std::string& text){
         return cnet.SetSpecial(text);
     }
 }
+
+
