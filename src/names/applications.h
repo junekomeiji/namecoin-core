@@ -29,4 +29,8 @@ bool IsMinimalJSONOrEmptyString (const std::string& text);
 
 std::string GetMinimalJSON (const std::string& text);
 
+bool IsValidIPV4 (const std::string& text);
+
+bool IsValidIPV6 (const std::string& text);
+
 #endif // H_BITCOIN_NAMES_APPLICATIONS

@@ -141,4 +141,24 @@ BOOST_AUTO_TEST_CASE( minimal_json )
     BOOST_CHECK_EQUAL(IsMinimalJSONOrEmptyString("{\"bar\":[1, 2, 3]}"), false);
 }
 
+BOOST_AUTO_TEST_CASE( valid_ipv4 )
+{
+    BOOST_CHECK_EQUAL(IsValidIPV4("192.168.1.1"), true);
+
+    BOOST_CHECK_EQUAL(IsValidIPV4("256.168.1.1"), false);
+
+    BOOST_CHECK_EQUAL(IsValidIPV4("010.011.002.012"), false);
+
+    BOOST_CHECK_EQUAL(IsValidIPV4("0x7f.0x0.0x0.0x1"), false);
+
+    BOOST_CHECK_EQUAL(IsValidIPV4("0:0:0:0:0:0:0:1"), false);
+}
+
+BOOST_AUTO_TEST_CASE( valid_ipv6 )
+{
+    BOOST_CHECK_EQUAL(IsValidIPV6("192.168.1.1"), false);
+
+    BOOST_CHECK_EQUAL(IsValidIPV6("0:0:0:0:0:0:0:1"), true);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

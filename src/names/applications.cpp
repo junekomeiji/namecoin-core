@@ -12,6 +12,12 @@
 
 #include <logging.h>
 
+#include <boost/asio.hpp>
+
+#include <boost/algorithm/string.hpp>
+
+#include <netaddress.h>
+
 namespace
 {
 
@@ -216,4 +222,40 @@ GetMinimalJSON (const std::string& text){
     v.read(text);
 
     return v.write(0,0);
+}
+
+bool
+IsValidIPV4 (const std::string& text){
+    boost::system::error_code ec;
+    boost::asio::ip::address_v4::from_string(text, ec);
+    
+    return !ec;
+}
+
+bool
+IsValidIPV6 (const std::string& text){
+    boost::system::error_code ec;
+    boost::asio::ip::address_v6::from_string(text, ec);
+    
+    return !ec;
+}
+
+bool
+IsValidOnionAddress(const std::string& text){
+    if(!text.ends_with(".onion")){
+        return false;
+    } else {
+        CNetAddr cnet;
+        return cnet.SetSpecial(text);
+    }
+}
+
+bool
+IsValidOnionAddress(const std::string& text){
+    if(!text.ends_with(".i2p")){
+        return false;
+    } else {
+        CNetAddr cnet;
+        return cnet.SetSpecial(text);
+    }
 }
