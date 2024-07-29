@@ -3,6 +3,8 @@
 #ifndef H_BITCOIN_NAMES_RECORDS
 #define H_BITCOIN_NAMES_RECORDS
 
+#include <string>
+
 class Record{
 
     private:
@@ -11,7 +13,7 @@ class Record{
     public:
 
         std::string getDomain();
-        void setDomain();
+        void setDomain(const std::string& text);
 
         Record(std::string& domain);
         
@@ -34,4 +36,6 @@ class IPRecord : public Record{
         IPRecord(std::string& domain, std::string& ip);
 
         bool validate();
-}
+};
+
+#endif //H_BITCOIN_NAMES_RECORDS

@@ -1,7 +1,8 @@
-#include <applications.h>
+#include <names/applications.h>
+#include <string>
 
 class Domain {
 
     std::string name;
 
-}
+};
