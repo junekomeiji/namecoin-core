@@ -35,7 +35,24 @@ class IPRecord : public Record{
 
         IPRecord(std::string& domain, std::string& ip);
 
-        bool validate();
+        bool validate() override; 
 };
+
+class NSRecord : public Record{
+    
+    private:
+        std::string ns;
+    
+    public:
+        std::string getNS();
+        void setNS(const std::string& text);
+
+        NSRecord(std::string& domain, std::string& ns);
+
+        bool validate() override;
+    
+};
+
+
 
 #endif //H_BITCOIN_NAMES_RECORDS

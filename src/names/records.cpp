@@ -46,7 +46,8 @@ IPRecord::IPRecord(std::string& domain, std::string& ip)
     }
 }
 
-bool IPRecord::validate(){
+bool IPRecord::validate() {
     return IsValidIPV4(this->IPV4) | IsValidIPV6(this->IPV6);
 }
+
 
