@@ -1,7 +1,7 @@
 //Copyright (c) 2024 Rose Turing
 
 #ifndef H_BITCOIN_NAMES_DOMAIN
-#define H_BITCOIN_NAMES_RECORDS
+#define H_BITCOIN_NAMES_DOMAIN
 
 #include <string>
 #include "applications.h"
@@ -23,7 +23,11 @@ class Domain{
         void setIPs(const std::list<IPRecord> ips);
         
         std::list<NSRecord> getNSs();
-        void setNSs(const std::list<NSrecord> nss);
+        void setNSs(const std::list<NSRecord> nss);
+
+
+        Domain(const std::string& name);
+
 };
 
-#endif //H_BITCOIN_NAMES_DOMAI
+#endif //H_BITCOIN_NAMES_DOMAIN
