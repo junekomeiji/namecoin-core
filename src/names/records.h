@@ -5,7 +5,7 @@
 
 #include <string>
 
-class Record{
+class DomainRecord{
 
     private:
         std::string domain;
@@ -15,30 +15,46 @@ class Record{
         std::string getDomain();
         void setDomain(const std::string& text);
 
-        Record(std::string& domain);
-        
-        virtual bool validate();
+        DomainRecord(std::string& domain);
+        DomainRecord();
+
+        virtual bool validate() = 0;
+
 };
 
-class IPRecord : public Record{
+class IPv4Record : public DomainRecord{
     
     private:
-        std::string IPV4;
-        std::string IPV6;
+        std::string address;
 
     public:
-        std::string getIPV4();
-        std::string getIPV6();
-        
-        void setIPV4(const std::string& text);
-        void setIPV6(const std::string& text);
+        std::string getIPv4Address();      
+        void setIPv4Address(const std::string& text);
 
-        IPRecord(std::string& domain, std::string& ip);
+        IPv4Record(std::string& domain, std::string& address);
+        IPv4Record(std::string& domain);
+        IPv4Record();
 
         bool validate() override; 
 };
 
-class NSRecord : public Record{
+class IPv6Record : public DomainRecord{
+    
+    private:
+        std::string address;
+
+    public:
+        std::string getIPv6Address();
+        void setIPv6Address(const std::string& text);
+
+        IPv6Record(std::string& domain, std::string& address);
+        IPv6Record(std::string& domain);
+        IPv6Record();
+
+        bool validate() override;
+};
+
+class NSRecord : public DomainRecord{
     
     private:
         std::string ns;
@@ -48,11 +64,11 @@ class NSRecord : public Record{
         void setNS(const std::string& text);
 
         NSRecord(std::string& domain, std::string& ns);
+        NSRecord(std::string& domain);
+        NSRecord();
 
         bool validate() override;
     
 };
-
-
 
 #endif //H_BITCOIN_NAMES_RECORDS
