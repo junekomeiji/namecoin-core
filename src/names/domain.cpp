@@ -1,5 +1,3 @@
-//Copyright (c) 2024 Rose Turing
-
 #include "applications.h"
 #include "domain.h"
 #include "records.h"
@@ -14,14 +12,22 @@ void Domain::setName(const std::string& text){
     this->name = text;
 }
 
-std::list<IPRecord> Domain::getIPs(){
-    return this->ips;
+std::list<IPv4Record> Domain::getIPv4s(){
+    return this->ipv4s;
 }
 
-void Domain::setIPs(const std::list<IPRecord> ips){
-    this->ips = ips;
+void Domain::setIPv4s(const std::list<IPv4Record> ipv4s){
+    this->ipv4s = ipv4s;
 }
-        
+
+std::list<IPv6Record> Domain::getIPv6s(){
+    return this->ipv6s;
+}
+
+void Domain::setIPv6s(const std::list<IPv6Record> ipv6s){
+    this->ipv6s = ipv6s;
+}
+
 std::list<NSRecord> Domain::getNSs(){
     return this->namespaces;
 }

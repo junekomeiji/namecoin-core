@@ -12,16 +12,20 @@ class Domain{
     
     private:
         std::string name;
-        std::list<IPRecord> ips;
+        std::list<IPv4Record> ipv4s;
+        std::list<IPv6Record> ipv6s;
         std::list<NSRecord> namespaces;
 
     public:
         std::string getName();
         void setName(const std::string& text);
 
-        std::list<IPRecord> getIPs();
-        void setIPs(const std::list<IPRecord> ips);
+        std::list<IPv4Record> getIPv4s();
+        void setIPv4s(const std::list<IPv4Record> ipv4s);
         
+        std::list<IPv6Record> getIPv6s();
+        void setIPv6s(const std::list<IPv6Record> ipv6s);
+
         std::list<NSRecord> getNSs();
         void setNSs(const std::list<NSRecord> nss);
 

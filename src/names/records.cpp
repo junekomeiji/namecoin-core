@@ -4,50 +4,110 @@
 #include "applications.h"
 #include <string>
  
-std::string Record::getDomain(){
+std::string DomainRecord::getDomain(){
     return domain;
 }
 
-void Record::setDomain(const std::string& text){
+void DomainRecord::setDomain(const std::string& text){
     domain = text;
 }
 
-Record::Record(std::string& domain){
+DomainRecord::DomainRecord(std::string& domain){
     this->domain = domain;
 }
 
-std::string IPRecord::getIPV4(){
-    return IPV4;    
+DomainRecord::DomainRecord(){
+    this->domain = "";
 }
 
-std::string IPRecord::getIPV6(){
-    return IPV6;    
+std::string IPv4Record::getIPv4Address(){
+    return address;    
 }
 
-void IPRecord::setIPV4(const std::string& text){
-    if(IsValidIPV4(text)){
-        this->IPV4 = text;
-    }
+void IPv4Record::setIPv4Address(const std::string& text){
+    this->address = text;
 }
-
-void IPRecord::setIPV6(const std::string& text){
-    if(IsValidIPV6(text)){
-        this->IPV6 = text;
-    }
-}
-        
-IPRecord::IPRecord(std::string& domain, std::string& ip)
-    :Record(domain)
+       
+IPv4Record::IPv4Record(std::string& domain, std::string& address)
+    :DomainRecord(domain)
 {
-    if(IsValidIPV4(ip)){
-        this->IPV4 = ip;
-    } else if(IsValidIPV6(ip)){
-        this->IPV6 = ip;
-    }
+    this->address = address;
 }
 
-bool IPRecord::validate() {
-    return IsValidIPV4(this->IPV4) | IsValidIPV6(this->IPV6);
+IPv4Record::IPv4Record(std::string& domain)
+    :DomainRecord(domain)
+{
+    this->address = "";
 }
 
+IPv4Record::IPv4Record()
+    :DomainRecord()
+{
+    this->address = "";
+}
 
+bool IPv4Record::validate() {
+    return IsValidIPV4(this->address);
+}
+
+std::string IPv6Record::getIPv6Address(){
+    return address;    
+}
+
+void IPv6Record::setIPv6Address(const std::string& text){
+    this->address = text;
+}
+ 
+IPv6Record::IPv6Record(std::string& domain, std::string& address)
+    :DomainRecord(domain)
+{
+    this->address = address;
+}
+
+IPv6Record::IPv6Record(std::string& domain)
+    :DomainRecord(domain)
+{
+    this->address = "";
+}
+
+IPv6Record::IPv6Record()
+    :DomainRecord()
+{
+    this->address = "";
+}
+
+bool IPv6Record::validate() {
+    return IsValidIPV6(this->address);
+}
+
+std::string NSRecord::getNS(){
+    return this->ns;
+}
+
+void NSRecord::setNS(const std::string& text){
+    this->ns = text;
+}
+
+NSRecord::NSRecord(std::string& domain, std::string& ns)
+    :DomainRecord(domain)
+{
+    this->ns = ns;
+}
+
+NSRecord::NSRecord(std::string& domain)
+    :DomainRecord(domain)
+{
+    this->ns = "";
+}
+
+NSRecord::NSRecord()
+    :DomainRecord()
+{
+    this->ns = "";
+}
+
+//TODO: jeremy my man i have no idea how to validate this
+bool NSRecord::validate(){
+    return false;
+}
+ 
