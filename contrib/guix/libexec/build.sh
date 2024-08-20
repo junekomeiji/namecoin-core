@@ -71,11 +71,9 @@ unset OBJCPLUS_INCLUDE_PATH
 
 export C_INCLUDE_PATH="${NATIVE_GCC}/include"
 export CPLUS_INCLUDE_PATH="${NATIVE_GCC}/include/c++:${NATIVE_GCC}/include"
-export OBJC_INCLUDE_PATH="${NATIVE_GCC}/include"
-export OBJCPLUS_INCLUDE_PATH="${NATIVE_GCC}/include/c++:${NATIVE_GCC}/include"
 
 case "$HOST" in
-    *darwin*) export LIBRARY_PATH="${NATIVE_GCC}/lib" ;;
+    *darwin*) export LIBRARY_PATH="${NATIVE_GCC}/lib" ;; # Required for qt/qmake
     *mingw*) export LIBRARY_PATH="${NATIVE_GCC}/lib" ;;
     *)
         NATIVE_GCC_STATIC="$(store_path gcc-toolchain static)"
@@ -178,9 +176,16 @@ make -C depends --jobs="$JOBS" HOST="$HOST" \
                                    x86_64_linux_AR=x86_64-linux-gnu-gcc-ar \
                                    x86_64_linux_RANLIB=x86_64-linux-gnu-gcc-ranlib \
                                    x86_64_linux_NM=x86_64-linux-gnu-gcc-nm \
-                                   x86_64_linux_STRIP=x86_64-linux-gnu-strip \
-                                   FORCE_USE_SYSTEM_CLANG=1
+                                   x86_64_linux_STRIP=x86_64-linux-gnu-strip
 
+case "$HOST" in
+    *darwin*)
+        # Unset now that Qt is built
+        unset C_INCLUDE_PATH
+        unset CPLUS_INCLUDE_PATH
+        unset LIBRARY_PATH
+        ;;
+esac
 
 ###########################
 # Source Tarball Building #
@@ -330,7 +335,7 @@ mkdir -p "$DISTSRC"
 
         # copy over the example bitcoin.conf file. if contrib/devtools/gen-bitcoin-conf.sh
         # has not been run before buildling, this file will be a stub
-        cp "${DISTSRC}/share/examples/bitcoin.conf" "${DISTNAME}/"
+        cp "${DISTSRC}/share/examples/namecoin.conf" "${DISTNAME}/"
 
         cp -r "${DISTSRC}/share/rpcauth" "${DISTNAME}/share/"
 

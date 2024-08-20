@@ -17,6 +17,7 @@
 #include <names/main.h>
 #include <names/mempool.h>
 #include <node/context.h>
+#include <node/types.h>
 #include <net.h>
 #include <primitives/transaction.h>
 #include <random.h>
@@ -27,8 +28,8 @@
 #include <rpc/util.h>
 #include <script/names.h>
 #include <txmempool.h>
-#include <util/fees.h>
 #include <util/moneystr.h>
+#include <util/transaction_identifier.h>
 #include <util/translation.h>
 #include <util/vector.h>
 #include <validation.h>
@@ -604,7 +605,10 @@ name_firstupdate ()
   prevTxid.SetNull (); // if it can't find a txid, force an error
   if (fixedTxid)
     {
-      prevTxid = TxidFromString (request.params[2].get_str ());
+      const auto id = Txid::FromHex (request.params[2].get_str ());
+      if (!id)
+        throw JSONRPCError (RPC_INVALID_PARAMETER, "invalid txid");
+      prevTxid = *id;
     }
   else
     {
@@ -879,9 +883,9 @@ queuerawtransaction ()
     {
       std::string unused_err_string;
       // Don't check max fee.
-      const TransactionError err = BroadcastTransaction(node, txParsed, unused_err_string,
+      const node::TransactionError err = BroadcastTransaction(node, txParsed, unused_err_string,
         /* max_tx_fee */ 0, /* relay */ true, /* wait_callback */ false);
-      assert(err == TransactionError::OK);
+      assert(err == node::TransactionError::OK);
 
       return hashTx.GetHex();
     }

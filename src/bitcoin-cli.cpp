@@ -42,6 +42,9 @@
 #include <event2/keyvalq_struct.h>
 #include <support/events.h>
 
+using util::Join;
+using util::ToString;
+
 // The server returns time values from a mockable system clock, but it is not
 // trivial to get the mocked time from the server, nor is it needed for now, so
 // just use a plain system_clock.
@@ -72,6 +75,7 @@ static void SetupCliArgs(ArgsManager& argsman)
 
     const auto defaultBaseParams = CreateBaseChainParams(ChainType::MAIN);
     const auto testnetBaseParams = CreateBaseChainParams(ChainType::TESTNET);
+    const auto testnet4BaseParams = CreateBaseChainParams(ChainType::TESTNET4);
     const auto signetBaseParams = CreateBaseChainParams(ChainType::SIGNET);
     const auto regtestBaseParams = CreateBaseChainParams(ChainType::REGTEST);
 
@@ -95,7 +99,7 @@ static void SetupCliArgs(ArgsManager& argsman)
     argsman.AddArg("-rpcconnect=<ip>", strprintf("Send commands to node running on <ip> (default: %s)", DEFAULT_RPCCONNECT), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-rpccookiefile=<loc>", "Location of the auth cookie. Relative paths will be prefixed by a net-specific datadir location. (default: data dir)", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-rpcpassword=<pw>", "Password for JSON-RPC connections", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
-    argsman.AddArg("-rpcport=<port>", strprintf("Connect to JSON-RPC on <port> (default: %u, testnet: %u, signet: %u, regtest: %u)", defaultBaseParams->RPCPort(), testnetBaseParams->RPCPort(), signetBaseParams->RPCPort(), regtestBaseParams->RPCPort()), ArgsManager::ALLOW_ANY | ArgsManager::NETWORK_ONLY, OptionsCategory::OPTIONS);
+    argsman.AddArg("-rpcport=<port>", strprintf("Connect to JSON-RPC on <port> (default: %u, testnet: %u, testnet4: %u, signet: %u, regtest: %u)", defaultBaseParams->RPCPort(), testnetBaseParams->RPCPort(), testnet4BaseParams->RPCPort(), signetBaseParams->RPCPort(), regtestBaseParams->RPCPort()), ArgsManager::ALLOW_ANY | ArgsManager::NETWORK_ONLY, OptionsCategory::OPTIONS);
     argsman.AddArg("-rpcuser=<user>", "Username for JSON-RPC connections", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-rpcwait", "Wait for RPC server to start", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-rpcwaittimeout=<n>", strprintf("Timeout in seconds to wait for the RPC server to start, or 0 for no timeout. (default: %d)", DEFAULT_WAIT_CLIENT_TIMEOUT), ArgsManager::ALLOW_ANY | ArgsManager::DISALLOW_NEGATION, OptionsCategory::OPTIONS);
@@ -425,6 +429,8 @@ private:
     std::string ChainToString() const
     {
         switch (gArgs.GetChainType()) {
+        case ChainType::TESTNET4:
+            return " testnet4";
         case ChainType::TESTNET:
             return " testnet";
         case ChainType::SIGNET:
@@ -743,8 +749,41 @@ static UniValue CallRPC(BaseRequestHandler* rh, const std::string& strMethod, co
     //     2. port in -rpcconnect (ie following : in ipv4 or ]: in ipv6)
     //     3. default port for chain
     uint16_t port{BaseParams().RPCPort()};
-    SplitHostPort(gArgs.GetArg("-rpcconnect", DEFAULT_RPCCONNECT), port, host);
-    port = static_cast<uint16_t>(gArgs.GetIntArg("-rpcport", port));
+    {
+        uint16_t rpcconnect_port{0};
+        const std::string rpcconnect_str = gArgs.GetArg("-rpcconnect", DEFAULT_RPCCONNECT);
+        if (!SplitHostPort(rpcconnect_str, rpcconnect_port, host)) {
+            // Uses argument provided as-is
+            // (rather than value parsed)
+            // to aid the user in troubleshooting
+            throw std::runtime_error(strprintf("Invalid port provided in -rpcconnect: %s", rpcconnect_str));
+        } else {
+            if (rpcconnect_port != 0) {
+                // Use the valid port provided in rpcconnect
+                port = rpcconnect_port;
+            } // else, no port was provided in rpcconnect (continue using default one)
+        }
+
+        if (std::optional<std::string> rpcport_arg = gArgs.GetArg("-rpcport")) {
+            // -rpcport was specified
+            const uint16_t rpcport_int{ToIntegral<uint16_t>(rpcport_arg.value()).value_or(0)};
+            if (rpcport_int == 0) {
+                // Uses argument provided as-is
+                // (rather than value parsed)
+                // to aid the user in troubleshooting
+                throw std::runtime_error(strprintf("Invalid port provided in -rpcport: %s", rpcport_arg.value()));
+            }
+
+            // Use the valid port provided
+            port = rpcport_int;
+
+            // If there was a valid port provided in rpcconnect,
+            // rpcconnect_port is non-zero.
+            if (rpcconnect_port != 0) {
+                tfm::format(std::cerr, "Warning: Port specified in both -rpcconnect and -rpcport. Using -rpcport %u\n", port);
+            }
+        }
+    }
 
     // Obtain event base
     raii_event_base base = obtain_event_base();

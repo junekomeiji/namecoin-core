@@ -60,7 +60,9 @@ class Coin;
 class SigningProvider;
 enum class MemPoolRemovalReason;
 enum class SigningResult;
-enum class TransactionError;
+namespace common {
+enum class PSBTError;
+} // namespace common
 namespace interfaces {
 class Wallet;
 }
@@ -667,7 +669,7 @@ public:
      * @param[in] finalize whether to create the final scriptSig or scriptWitness if possible
      * return error
      */
-    TransactionError FillPSBT(PartiallySignedTransaction& psbtx,
+    std::optional<common::PSBTError> FillPSBT(PartiallySignedTransaction& psbtx,
                   bool& complete,
                   int sighash_type = SIGHASH_DEFAULT,
                   bool sign = true,
@@ -971,8 +973,10 @@ public:
     //! Get the LegacyScriptPubKeyMan which is used for all types, internal, and external.
     LegacyScriptPubKeyMan* GetLegacyScriptPubKeyMan() const;
     LegacyScriptPubKeyMan* GetOrCreateLegacyScriptPubKeyMan();
+    LegacyDataSPKM* GetLegacyDataSPKM() const;
+    LegacyDataSPKM* GetOrCreateLegacyDataSPKM();
 
-    //! Make a LegacyScriptPubKeyMan and set it for all types, internal, and external.
+    //! Make a Legacy(Data)SPKM and set it for all types, internal, and external.
     void SetupLegacyScriptPubKeyMan();
 
     bool WithEncryptionKey(std::function<bool (const CKeyingMaterial&)> cb) const override;

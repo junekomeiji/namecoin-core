@@ -206,9 +206,9 @@ AC_ARG_WITH([qrencode],
 
 AC_ARG_ENABLE([hardening],
   [AS_HELP_STRING([--disable-hardening],
-  [do not attempt to harden the resulting executables (default is to harden when possible)])],
+  [do not attempt to harden the resulting executables (default is to harden)])],
   [use_hardening=$enableval],
-  [use_hardening=auto])
+  [use_hardening=yes])
 
 AC_ARG_ENABLE([reduce-exports],
   [AS_HELP_STRING([--enable-reduce-exports],
@@ -280,13 +280,6 @@ AC_ARG_WITH([sanitizers],
     [AS_HELP_STRING([--with-sanitizers],
                     [comma separated list of extra sanitizers to build with (default is none enabled)])],
     [use_sanitizers=$withval])
-
-dnl Enable gprof profiling
-AC_ARG_ENABLE([gprof],
-    [AS_HELP_STRING([--enable-gprof],
-                    [use gprof profiling compiler flags (default is no)])],
-    [enable_gprof=$enableval],
-    [enable_gprof=no])
 
 dnl Turn warnings into errors
 AC_ARG_ENABLE([werror],
@@ -411,12 +404,13 @@ AX_CHECK_COMPILE_FLAG([-Wsuggest-override], [WARN_CXXFLAGS="$WARN_CXXFLAGS -Wsug
 AX_CHECK_COMPILE_FLAG([-Wimplicit-fallthrough], [WARN_CXXFLAGS="$WARN_CXXFLAGS -Wimplicit-fallthrough"], [], [$CXXFLAG_WERROR])
 AX_CHECK_COMPILE_FLAG([-Wunreachable-code], [WARN_CXXFLAGS="$WARN_CXXFLAGS -Wunreachable-code"], [], [$CXXFLAG_WERROR])
 AX_CHECK_COMPILE_FLAG([-Wdocumentation], [WARN_CXXFLAGS="$WARN_CXXFLAGS -Wdocumentation"], [], [$CXXFLAG_WERROR])
+AX_CHECK_COMPILE_FLAG([-Wself-assign], [WARN_CXXFLAGS="$WARN_CXXFLAGS -Wself-assign"], [], [$CXXFLAG_WERROR])
+AX_CHECK_COMPILE_FLAG([-Wundef], [WARN_CXXFLAGS="$WARN_CXXFLAGS -Wundef"], [], [$CXXFLAG_WERROR])
 
 dnl Some compilers (gcc) ignore unknown -Wno-* options, but warn about all
 dnl unknown options if any other warning is produced. Test the -Wfoo case, and
 dnl set the -Wno-foo case if it works.
 AX_CHECK_COMPILE_FLAG([-Wunused-parameter], [NOWARN_CXXFLAGS="$NOWARN_CXXFLAGS -Wno-unused-parameter"], [], [$CXXFLAG_WERROR])
-AX_CHECK_COMPILE_FLAG([-Wself-assign], [NOWARN_CXXFLAGS="$NOWARN_CXXFLAGS -Wno-self-assign"], [], [$CXXFLAG_WERROR])
 
 dnl Don't allow extended (non-ASCII) symbols in identifiers. This is easier for code review.
 AX_CHECK_COMPILE_FLAG([-fno-extended-identifiers], [CORE_CXXFLAGS="$CORE_CXXFLAGS -fno-extended-identifiers"], [], [$CXXFLAG_WERROR])
@@ -488,11 +482,12 @@ TEMP_CXXFLAGS="$CXXFLAGS"
 CXXFLAGS="$SSE41_CXXFLAGS $CXXFLAGS"
 AC_MSG_CHECKING([for SSE4.1 intrinsics])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-    #include <stdint.h>
     #include <immintrin.h>
   ]],[[
-    __m128i l = _mm_set1_epi32(0);
-    return _mm_extract_epi32(l, 3);
+    __m128i a = _mm_set1_epi32(0);
+    __m128i b = _mm_set1_epi32(1);
+    __m128i r = _mm_blend_epi16(a, b, 0xFF);
+    return _mm_extract_epi32(r, 3);
   ]])],
  [ AC_MSG_RESULT([yes]); enable_sse41=yes; AC_DEFINE([ENABLE_SSE41], [1], [Define this symbol to build code that uses SSE4.1 intrinsics]) ],
  [ AC_MSG_RESULT([no])]
@@ -844,30 +839,12 @@ if test "$ac_cv_sys_large_files" != "" &&
   CORE_CPPFLAGS="$CORE_CPPFLAGS -D_LARGE_FILES=$ac_cv_sys_large_files"
 fi
 
-if test "$enable_gprof" = "yes"; then
-    dnl -pg is incompatible with -pie. Since hardening and profiling together doesn't make sense,
-    dnl we simply make them mutually exclusive here. Additionally, hardened toolchains may force
-    dnl -pie by default, in which case it needs to be turned off with -no-pie.
-
-    if test "$use_hardening" = "yes"; then
-        AC_MSG_ERROR([gprof profiling is not compatible with hardening. Reconfigure with --disable-hardening or --disable-gprof])
-    fi
-    use_hardening=no
-    AX_CHECK_COMPILE_FLAG([-pg],[GPROF_CXXFLAGS="-pg"],
-        [AC_MSG_ERROR([gprof profiling requested but not available])], [$CXXFLAG_WERROR])
-
-    AX_CHECK_LINK_FLAG([-no-pie], [GPROF_LDFLAGS="-no-pie"])
-    AX_CHECK_LINK_FLAG([-pg], [GPROF_LDFLAGS="$GPROF_LDFLAGS -pg"],
-        [AC_MSG_ERROR([gprof profiling requested but not available])], [$GPROF_LDFLAGS])
-fi
-
 if test "$TARGET_OS" != "windows"; then
   dnl All windows code is PIC, forcing it on just adds useless compile warnings
   AX_CHECK_COMPILE_FLAG([-fPIC], [PIC_FLAGS="-fPIC"])
 fi
 
 if test "$use_hardening" != "no"; then
-  use_hardening=yes
   AX_CHECK_COMPILE_FLAG([-Wstack-protector], [HARDENED_CXXFLAGS="$HARDENED_CXXFLAGS -Wstack-protector"])
   AX_CHECK_COMPILE_FLAG([-fstack-protector-all], [HARDENED_CXXFLAGS="$HARDENED_CXXFLAGS -fstack-protector-all"])
 
@@ -921,7 +898,7 @@ if test "$TARGET_OS" = "darwin"; then
   AX_CHECK_LINK_FLAG([-Wl,-fixup_chains], [HARDENED_LDFLAGS="$HARDENED_LDFLAGS -Wl,-fixup_chains"], [], [$LDFLAG_WERROR])
 fi
 
-AC_CHECK_HEADERS([sys/select.h sys/prctl.h sys/sysctl.h vm/vm_param.h sys/vmmeter.h sys/resources.h])
+AC_CHECK_HEADERS([sys/select.h sys/prctl.h vm/vm_param.h sys/vmmeter.h sys/resources.h])
 
 AC_CHECK_DECLS([getifaddrs, freeifaddrs],[CHECK_SOCKET],,
     [#include <sys/types.h>
@@ -964,35 +941,6 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
                    [[ int f = posix_fallocate(0, 0, 0); ]])],
  [ AC_MSG_RESULT([yes]); AC_DEFINE([HAVE_POSIX_FALLOCATE], [1], [Define this symbol if you have posix_fallocate]) ],
  [ AC_MSG_RESULT([no])]
-)
-
-AC_MSG_CHECKING([for default visibility attribute])
-AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-  int foo(void) __attribute__((visibility("default")));
-  int main(){}
-  ])],
-  [
-    AC_DEFINE([HAVE_DEFAULT_VISIBILITY_ATTRIBUTE], [1], [Define if the visibility attribute is supported.])
-    AC_MSG_RESULT([yes])
-  ],
-  [
-    AC_MSG_RESULT([no])
-    if test "$use_reduce_exports" = "yes"; then
-      AC_MSG_ERROR([Cannot find a working visibility attribute. Use --disable-reduce-exports.])
-    fi
-  ]
-)
-
-AC_MSG_CHECKING([for dllexport attribute])
-AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-  __declspec(dllexport) int foo(void);
-  int main(){}
-  ])],
-  [
-    AC_DEFINE([HAVE_DLLEXPORT_ATTRIBUTE], [1], [Define if the dllexport attribute is supported.])
-    AC_MSG_RESULT([yes])
-  ],
-  [AC_MSG_RESULT([no])]
 )
 
 dnl Check for different ways of gathering OS randomness
@@ -1341,6 +1289,7 @@ if test "$use_reduce_exports" = "yes"; then
   AX_CHECK_COMPILE_FLAG([-fvisibility=hidden], [CORE_CXXFLAGS="$CORE_CXXFLAGS -fvisibility=hidden"],
   [AC_MSG_ERROR([Cannot set hidden symbol visibility. Use --disable-reduce-exports.])], [$CXXFLAG_WERROR])
   AX_CHECK_LINK_FLAG([-Wl,--exclude-libs,ALL], [RELDFLAGS="-Wl,--exclude-libs,ALL"], [], [$LDFLAG_WERROR])
+  AX_CHECK_LINK_FLAG([-Wl,-no_exported_symbols], [LIBTOOL_APP_LDFLAGS="$LIBTOOL_APP_LDFLAGS -Wl,-no_exported_symbols"], [], [$LDFLAG_WERROR])
 fi
 
 if test "$use_tests" = "yes"; then
@@ -1417,6 +1366,9 @@ if test "$with_libmultiprocess" = "yes" || test "$with_libmultiprocess" = "auto"
   PKG_CHECK_MODULES([LIBMULTIPROCESS], [libmultiprocess], [
      libmultiprocess_found=yes;
      libmultiprocess_prefix=`$PKG_CONFIG --variable=prefix libmultiprocess`;
+     if test "$suppress_external_warnings" != "no" ; then
+       LIBMULTIPROCESS_CFLAGS=SUPPRESS_WARNINGS($LIBMULTIPROCESS_CFLAGS)
+     fi
   ], [true])
 elif test "$with_libmultiprocess" != "no"; then
   AC_MSG_ERROR([--with-libmultiprocess=$with_libmultiprocess value is not yes, auto, or no])
@@ -1684,8 +1636,6 @@ AC_SUBST(WARN_CXXFLAGS)
 AC_SUBST(NOWARN_CXXFLAGS)
 AC_SUBST(DEBUG_CXXFLAGS)
 AC_SUBST(ERROR_CXXFLAGS)
-AC_SUBST(GPROF_CXXFLAGS)
-AC_SUBST(GPROF_LDFLAGS)
 AC_SUBST(HARDENED_CXXFLAGS)
 AC_SUBST(HARDENED_CPPFLAGS)
 AC_SUBST(HARDENED_LDFLAGS)
@@ -1743,7 +1693,7 @@ CPPFLAGS="$CPPFLAGS_TEMP"
 if test -n "$use_sanitizers"; then
   export SECP_CFLAGS="$SECP_CFLAGS $SANITIZER_CFLAGS"
 fi
-ac_configure_args="${ac_configure_args} --disable-shared --with-pic --with-ecmult-gen-kb=86 --enable-benchmark=no --enable-module-recovery --disable-module-ecdh"
+ac_configure_args="${ac_configure_args} --disable-shared --with-pic --enable-benchmark=no --enable-module-recovery --disable-module-ecdh"
 AC_CONFIG_SUBDIRS([src/secp256k1])
 
 AC_OUTPUT
@@ -1793,7 +1743,6 @@ echo "  with natpmp     = $use_natpmp"
 echo "  USDT tracing    = $use_usdt"
 echo "  sanitizers      = $use_sanitizers"
 echo "  debug enabled   = $enable_debug"
-echo "  gprof enabled   = $enable_gprof"
 echo "  werror          = $enable_werror"
 echo
 echo "  target os       = $host_os"
@@ -1803,8 +1752,8 @@ echo "  CC              = $CC"
 echo "  CFLAGS          = $PTHREAD_CFLAGS $SANITIZER_CFLAGS $CFLAGS"
 echo "  CPPFLAGS        = $DEBUG_CPPFLAGS $HARDENED_CPPFLAGS $CORE_CPPFLAGS $CPPFLAGS"
 echo "  CXX             = $CXX"
-echo "  CXXFLAGS        = $CORE_CXXFLAGS $DEBUG_CXXFLAGS $HARDENED_CXXFLAGS $WARN_CXXFLAGS $NOWARN_CXXFLAGS $ERROR_CXXFLAGS $GPROF_CXXFLAGS $SANITIZER_CXXFLAGS $CXXFLAGS"
-echo "  LDFLAGS         = $PTHREAD_LIBS $HARDENED_LDFLAGS $GPROF_LDFLAGS $SANITIZER_LDFLAGS $CORE_LDFLAGS $LDFLAGS"
+echo "  CXXFLAGS        = $CORE_CXXFLAGS $DEBUG_CXXFLAGS $HARDENED_CXXFLAGS $WARN_CXXFLAGS $NOWARN_CXXFLAGS $ERROR_CXXFLAGS $SANITIZER_CXXFLAGS $CXXFLAGS"
+echo "  LDFLAGS         = $PTHREAD_LIBS $HARDENED_LDFLAGS $SANITIZER_LDFLAGS $CORE_LDFLAGS $LDFLAGS"
 echo "  AR              = $AR"
 echo "  ARFLAGS         = $ARFLAGS"
 echo

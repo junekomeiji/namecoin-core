@@ -256,7 +256,7 @@ public:
 /** The Transport converts one connection's sent messages to wire bytes, and received bytes back. */
 class Transport {
 public:
-    virtual ~Transport() {}
+    virtual ~Transport() = default;
 
     struct Info
     {
@@ -997,8 +997,8 @@ public:
     /** Mutex for anything that is only accessed via the msg processing thread */
     static Mutex g_msgproc_mutex;
 
-    /** Initialize a peer (setup state, queue any initial messages) */
-    virtual void InitializeNode(CNode& node, ServiceFlags our_services) = 0;
+    /** Initialize a peer (setup state) */
+    virtual void InitializeNode(const CNode& node, ServiceFlags our_services) = 0;
 
     /** Handle removal of a peer (clear state) */
     virtual void FinalizeNode(const CNode& node) = 0;
@@ -1211,6 +1211,7 @@ public:
     bool AddConnection(const std::string& address, ConnectionType conn_type, bool use_v2transport) EXCLUSIVE_LOCKS_REQUIRED(!m_unused_i2p_sessions_mutex);
 
     size_t GetNodeCount(ConnectionDirection) const;
+    std::map<CNetAddr, LocalServiceInfo> getNetLocalAddresses() const;
     uint32_t GetMappedAS(const CNetAddr& addr) const;
     void GetNodeStats(std::vector<CNodeStats>& vstats) const;
     bool DisconnectNode(const std::string& node);
@@ -1631,7 +1632,7 @@ private:
                 }
             }
             if (shuffle) {
-                Shuffle(m_nodes_copy.begin(), m_nodes_copy.end(), FastRandomContext{});
+                std::shuffle(m_nodes_copy.begin(), m_nodes_copy.end(), FastRandomContext{});
             }
         }
 

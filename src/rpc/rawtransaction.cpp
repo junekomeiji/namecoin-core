@@ -17,6 +17,7 @@
 #include <node/context.h>
 #include <node/psbt.h>
 #include <node/transaction.h>
+#include <node/types.h>
 #include <policy/packages.h>
 #include <policy/policy.h>
 #include <policy/rbf.h>
@@ -84,9 +85,9 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry, 
 static std::vector<RPCResult> ScriptPubKeyDoc() {
     return
          {
-             {RPCResult::Type::STR, "asm", "Disassembly of the public key script"},
+             {RPCResult::Type::STR, "asm", "Disassembly of the output script"},
              {RPCResult::Type::STR, "desc", "Inferred descriptor for the output"},
-             {RPCResult::Type::STR_HEX, "hex", "The raw public key script bytes, hex-encoded"},
+             {RPCResult::Type::STR_HEX, "hex", "The raw output script bytes, hex-encoded"},
              {RPCResult::Type::STR, "address", /*optional=*/true, "The Bitcoin address (only if a well-defined address exists)"},
              {RPCResult::Type::STR, "type", "The type (one of: " + GetAllOutputTypes() + ")"},
              NameOpResult,
@@ -506,7 +507,7 @@ static RPCHelpMan decodescript()
         RPCResult{
             RPCResult::Type::OBJ, "", "",
             {
-                {RPCResult::Type::STR, "asm", "Script public key"},
+                {RPCResult::Type::STR, "asm", "Disassembly of the script"},
                 {RPCResult::Type::STR, "desc", "Inferred descriptor for the script"},
                 {RPCResult::Type::STR, "type", "The output type (e.g. " + GetAllOutputTypes() + ")"},
                 {RPCResult::Type::STR, "address", /*optional=*/true, "The address (only if a well-defined address exists)"},
@@ -514,11 +515,11 @@ static RPCHelpMan decodescript()
                 {RPCResult::Type::STR, "p2sh", /*optional=*/true,
                  "address of P2SH script wrapping this redeem script (not returned for types that should not be wrapped)"},
                 {RPCResult::Type::OBJ, "segwit", /*optional=*/true,
-                 "Result of a witness script public key wrapping this redeem script (not returned for types that should not be wrapped)",
+                 "Result of a witness output script wrapping this redeem script (not returned for types that should not be wrapped)",
                  {
-                     {RPCResult::Type::STR, "asm", "String representation of the script public key"},
-                     {RPCResult::Type::STR_HEX, "hex", "Hex string of the script public key"},
-                     {RPCResult::Type::STR, "type", "The type of the script public key (e.g. witness_v0_keyhash or witness_v0_scripthash)"},
+                     {RPCResult::Type::STR, "asm", "Disassembly of the output script"},
+                     {RPCResult::Type::STR_HEX, "hex", "The raw output script bytes, hex-encoded"},
+                     {RPCResult::Type::STR, "type", "The type of the output script (e.g. witness_v0_keyhash or witness_v0_scripthash)"},
                      {RPCResult::Type::STR, "address", /*optional=*/true, "The address (only if a well-defined address exists)"},
                      {RPCResult::Type::STR, "desc", "Inferred descriptor for the script"},
                      {RPCResult::Type::STR, "p2sh-segwit", "address of the P2SH script wrapping this witness redeem script"},
@@ -558,6 +559,7 @@ static RPCHelpMan decodescript()
         case TxoutType::SCRIPTHASH:
         case TxoutType::WITNESS_UNKNOWN:
         case TxoutType::WITNESS_V1_TAPROOT:
+        case TxoutType::ANCHOR:
             // Should not be wrapped
             return false;
         } // no default case, so the compiler can warn about missing cases
@@ -600,6 +602,7 @@ static RPCHelpMan decodescript()
             case TxoutType::WITNESS_V0_KEYHASH:
             case TxoutType::WITNESS_V0_SCRIPTHASH:
             case TxoutType::WITNESS_V1_TAPROOT:
+            case TxoutType::ANCHOR:
                 // Should not be wrapped
                 return false;
             } // no default case, so the compiler can warn about missing cases
@@ -834,9 +837,9 @@ const RPCResult decodepsbt_inputs{
                 {RPCResult::Type::NUM, "amount", "The value in " + CURRENCY_UNIT},
                 {RPCResult::Type::OBJ, "scriptPubKey", "",
                 {
-                    {RPCResult::Type::STR, "asm", "Disassembly of the public key script"},
+                    {RPCResult::Type::STR, "asm", "Disassembly of the output script"},
                     {RPCResult::Type::STR, "desc", "Inferred descriptor for the output"},
-                    {RPCResult::Type::STR_HEX, "hex", "The raw public key script bytes, hex-encoded"},
+                    {RPCResult::Type::STR_HEX, "hex", "The raw output script bytes, hex-encoded"},
                     {RPCResult::Type::STR, "type", "The type, eg 'pubkeyhash'"},
                     {RPCResult::Type::STR, "address", /*optional=*/true, "The address (only if a well-defined address exists)"},
                 }},
@@ -1491,9 +1494,8 @@ static RPCHelpMan combinepsbt()
     }
 
     PartiallySignedTransaction merged_psbt;
-    const TransactionError error = CombinePSBTs(merged_psbt, psbtxs);
-    if (error != TransactionError::OK) {
-        throw JSONRPCTransactionError(error);
+    if (!CombinePSBTs(merged_psbt, psbtxs)) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "PSBTs not compatible (different transactions)");
     }
 
     DataStream ssTx{};
@@ -1750,8 +1752,8 @@ static RPCHelpMan joinpsbts()
         }
         psbtxs.push_back(psbtx);
         // Choose the highest version number
-        if (static_cast<uint32_t>(psbtx.tx->nVersion) > best_version) {
-            best_version = static_cast<uint32_t>(psbtx.tx->nVersion);
+        if (psbtx.tx->version > best_version) {
+            best_version = psbtx.tx->version;
         }
         // Choose the lowest lock time
         if (psbtx.tx->nLockTime < best_locktime) {
@@ -1762,7 +1764,7 @@ static RPCHelpMan joinpsbts()
     // Create a blank psbt where everything will be added
     PartiallySignedTransaction merged_psbt;
     merged_psbt.tx = CMutableTransaction();
-    merged_psbt.tx->nVersion = static_cast<int32_t>(best_version);
+    merged_psbt.tx->version = best_version;
     merged_psbt.tx->nLockTime = best_locktime;
 
     // Merge
@@ -1792,12 +1794,12 @@ static RPCHelpMan joinpsbts()
     std::iota(output_indices.begin(), output_indices.end(), 0);
 
     // Shuffle input and output indices lists
-    Shuffle(input_indices.begin(), input_indices.end(), FastRandomContext());
-    Shuffle(output_indices.begin(), output_indices.end(), FastRandomContext());
+    std::shuffle(input_indices.begin(), input_indices.end(), FastRandomContext());
+    std::shuffle(output_indices.begin(), output_indices.end(), FastRandomContext());
 
     PartiallySignedTransaction shuffled_psbt;
     shuffled_psbt.tx = CMutableTransaction();
-    shuffled_psbt.tx->nVersion = merged_psbt.tx->nVersion;
+    shuffled_psbt.tx->version = merged_psbt.tx->version;
     shuffled_psbt.tx->nLockTime = merged_psbt.tx->nLockTime;
     for (int i : input_indices) {
         shuffled_psbt.AddInput(merged_psbt.tx->vin[i], merged_psbt.inputs[i]);

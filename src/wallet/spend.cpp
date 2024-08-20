@@ -4,10 +4,12 @@
 
 #include <algorithm>
 #include <common/args.h>
+#include <common/messages.h>
 #include <common/system.h>
 #include <consensus/amount.h>
 #include <consensus/validation.h>
 #include <interfaces/chain.h>
+#include <node/types.h>
 #include <numeric>
 #include <policy/policy.h>
 #include <primitives/transaction.h>
@@ -16,7 +18,6 @@
 #include <script/signingprovider.h>
 #include <script/solver.h>
 #include <util/check.h>
-#include <util/fees.h>
 #include <util/moneystr.h>
 #include <util/rbf.h>
 #include <util/trace.h>
@@ -30,7 +31,10 @@
 
 #include <cmath>
 
+using common::StringForFeeReason;
+using common::TransactionErrorString;
 using interfaces::FoundBlock;
+using node::TransactionError;
 
 namespace wallet {
 static constexpr size_t OUTPUT_GROUP_MAX_ENTRIES{100};
@@ -141,7 +145,7 @@ static std::optional<int64_t> GetSignedTxinWeight(const CWallet* wallet, const C
 // txouts needs to be in the order of tx.vin
 TxSize CalculateMaximumSignedTxSize(const CTransaction &tx, const CWallet *wallet, const std::vector<CTxOut>& txouts, const CCoinControl* coin_control)
 {
-    // nVersion + nLockTime + input count + output count
+    // version + nLockTime + input count + output count
     int64_t weight = (4 + 4 + GetSizeOfCompactSize(tx.vin.size()) + GetSizeOfCompactSize(tx.vout.size())) * WITNESS_SCALE_FACTOR;
     // Whether any input spends a witness program. Necessary to run before the next loop over the
     // inputs in order to accurately compute the compactSize length for the witness data per input.
@@ -231,7 +235,7 @@ void CoinsResult::Erase(const std::unordered_set<COutPoint, SaltedOutpointHasher
 void CoinsResult::Shuffle(FastRandomContext& rng_fast)
 {
     for (auto& it : coins) {
-        ::Shuffle(it.second.begin(), it.second.end(), rng_fast);
+        std::shuffle(it.second.begin(), it.second.end(), rng_fast);
     }
 }
 
@@ -265,7 +269,7 @@ static OutputType GetOutputType(TxoutType type, bool is_from_p2sh)
 // Fetch and validate the coin control selected inputs.
 // Coins could be internal (from the wallet) or external.
 util::Result<PreSelectedInputs> FetchSelectedInputs(const CWallet& wallet, const CTxIn* withNameInput, const CCoinControl& coin_control,
-                                            const CoinSelectionParams& coin_selection_params) EXCLUSIVE_LOCKS_REQUIRED(wallet.cs_wallet)
+                                            const CoinSelectionParams& coin_selection_params)
 {
     PreSelectedInputs result;
     std::vector<COutPoint> vPresetInputs = coin_control.ListSelected();
@@ -717,26 +721,35 @@ util::Result<SelectionResult> ChooseSelectionResult(interfaces::Chain& chain, co
         }
     };
 
-    // Maximum allowed weight
-    int max_inputs_weight = MAX_STANDARD_TX_WEIGHT - (coin_selection_params.tx_noinputs_size * WITNESS_SCALE_FACTOR);
+    // Maximum allowed weight for selected coins.
+    int max_transaction_weight = coin_selection_params.m_max_tx_weight.value_or(MAX_STANDARD_TX_WEIGHT);
+    int tx_weight_no_input = coin_selection_params.tx_noinputs_size * WITNESS_SCALE_FACTOR;
+    int max_selection_weight = max_transaction_weight - tx_weight_no_input;
+    if (max_selection_weight <= 0) {
+        return util::Error{_("Maximum transaction weight is less than transaction weight without inputs")};
+    }
 
     // SFFO frequently causes issues in the context of changeless input sets: skip BnB when SFFO is active
     if (!coin_selection_params.m_subtract_fee_outputs) {
-        if (auto bnb_result{SelectCoinsBnB(groups.positive_group, nTargetValue, coin_selection_params.m_cost_of_change, max_inputs_weight)}) {
+        if (auto bnb_result{SelectCoinsBnB(groups.positive_group, nTargetValue, coin_selection_params.m_cost_of_change, max_selection_weight)}) {
             results.push_back(*bnb_result);
         } else append_error(std::move(bnb_result));
     }
 
-    // As Knapsack and SRD can create change, also deduce change weight.
-    max_inputs_weight -= (coin_selection_params.change_output_size * WITNESS_SCALE_FACTOR);
+    // Deduct change weight because remaining Coin Selection algorithms can create change output
+    int change_outputs_weight = coin_selection_params.change_output_size * WITNESS_SCALE_FACTOR;
+    max_selection_weight -= change_outputs_weight;
+    if (max_selection_weight < 0 && results.empty()) {
+        return util::Error{_("Maximum transaction weight is too low, can not accommodate change output")};
+    }
 
     // The knapsack solver has some legacy behavior where it will spend dust outputs. We retain this behavior, so don't filter for positive only here.
-    if (auto knapsack_result{KnapsackSolver(groups.mixed_group, nTargetValue, coin_selection_params.m_min_change_target, coin_selection_params.rng_fast, max_inputs_weight)}) {
+    if (auto knapsack_result{KnapsackSolver(groups.mixed_group, nTargetValue, coin_selection_params.m_min_change_target, coin_selection_params.rng_fast, max_selection_weight)}) {
         results.push_back(*knapsack_result);
     } else append_error(std::move(knapsack_result));
 
     if (coin_selection_params.m_effective_feerate > CFeeRate{3 * coin_selection_params.m_long_term_feerate}) { // Minimize input set for feerates of at least 3×LTFRE (default: 30 ṩ/vB+)
-        if (auto cg_result{CoinGrinder(groups.positive_group, nTargetValue, coin_selection_params.m_min_change_target, max_inputs_weight)}) {
+        if (auto cg_result{CoinGrinder(groups.positive_group, nTargetValue, coin_selection_params.m_min_change_target, max_selection_weight)}) {
             cg_result->RecalculateWaste(coin_selection_params.min_viable_change, coin_selection_params.m_cost_of_change, coin_selection_params.m_change_fee);
             results.push_back(*cg_result);
         } else {
@@ -744,7 +757,7 @@ util::Result<SelectionResult> ChooseSelectionResult(interfaces::Chain& chain, co
         }
     }
 
-    if (auto srd_result{SelectCoinsSRD(groups.positive_group, nTargetValue, coin_selection_params.m_change_fee, coin_selection_params.rng_fast, max_inputs_weight)}) {
+    if (auto srd_result{SelectCoinsSRD(groups.positive_group, nTargetValue, coin_selection_params.m_change_fee, coin_selection_params.rng_fast, max_selection_weight)}) {
         results.push_back(*srd_result);
     } else append_error(std::move(srd_result));
 
@@ -821,6 +834,13 @@ util::Result<SelectionResult> SelectCoins(const CWallet& wallet, CoinsResult& av
         op_selection_result->RecalculateWaste(coin_selection_params.min_viable_change,
                                                 coin_selection_params.m_cost_of_change,
                                                 coin_selection_params.m_change_fee);
+
+        // Verify we haven't exceeded the maximum allowed weight
+        int max_inputs_weight = coin_selection_params.m_max_tx_weight.value_or(MAX_STANDARD_TX_WEIGHT) - (coin_selection_params.tx_noinputs_size * WITNESS_SCALE_FACTOR);
+        if (op_selection_result->GetWeight() > max_inputs_weight) {
+            return util::Error{_("The combination of the pre-selected inputs and the wallet automatic inputs selection exceeds the transaction maximum weight. "
+                                 "Please try sending a smaller amount or manually consolidating your wallet's UTXOs")};
+        }
     }
     return op_selection_result;
 }
@@ -998,6 +1018,17 @@ static void DiscourageFeeSniping(CMutableTransaction& tx, FastRandomContext& rng
     }
 }
 
+size_t GetSerializeSizeForRecipient(const CRecipient& recipient)
+{
+    const auto fullScript = CNameScript::AddNamePrefix (GetScriptForDestination(recipient.dest), recipient.nameScript);
+    return ::GetSerializeSize(CTxOut(recipient.nAmount, fullScript));
+}
+
+bool IsDust(const CRecipient& recipient, const CFeeRate& dustRelayFee)
+{
+    return ::IsDust(CTxOut(recipient.nAmount, GetScriptForDestination(recipient.dest)), dustRelayFee);
+}
+
 static util::Result<CreatedTransactionResult> CreateTransactionInternal(
         CWallet& wallet,
         const std::vector<CRecipient>& vecSend,
@@ -1012,15 +1043,21 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
     CMutableTransaction txNew; // The resulting transaction that we make
 
     if (coin_control.m_version) {
-        txNew.nVersion = coin_control.m_version.value();
+        txNew.version = coin_control.m_version.value();
     }
 
     CoinSelectionParams coin_selection_params{rng_fast}; // Parameters for coin selection, init with dummy
     coin_selection_params.m_avoid_partial_spends = coin_control.m_avoid_partial_spends;
     coin_selection_params.m_include_unsafe_inputs = coin_control.m_include_unsafe_inputs;
-
+    coin_selection_params.m_max_tx_weight = coin_control.m_max_tx_weight.value_or(MAX_STANDARD_TX_WEIGHT);
+    int minimum_tx_weight = MIN_STANDARD_TX_NONWITNESS_SIZE * WITNESS_SCALE_FACTOR;
+    if (coin_selection_params.m_max_tx_weight.value() < minimum_tx_weight || coin_selection_params.m_max_tx_weight.value() > MAX_STANDARD_TX_WEIGHT) {
+        return util::Error{strprintf(_("Maximum transaction weight must be between %d and %d"), minimum_tx_weight, MAX_STANDARD_TX_WEIGHT)};
+    }
     // Set the long term feerate estimate to the wallet's consolidate feerate
     coin_selection_params.m_long_term_feerate = wallet.m_consolidate_feerate;
+    // Static vsize overhead + outputs vsize. 4 nVersion, 4 nLocktime, 1 input count, 1 witness overhead (dummy, flag, stack size)
+    coin_selection_params.tx_noinputs_size = 10 + GetSizeOfCompactSize(vecSend.size()); // bytes for output count
 
     CAmount recipients_sum = 0;
     const OutputType change_type = wallet.TransactionChangeType(coin_control.m_change_type ? *coin_control.m_change_type : wallet.m_default_change_type, vecSend);
@@ -1028,6 +1065,12 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
     unsigned int outputs_to_subtract_fee_from = 0; // The number of outputs which we are subtracting the fee from
     bool isNamecoin = false;
     for (const auto& recipient : vecSend) {
+        if (IsDust(recipient, wallet.chain().relayDustFee())) {
+            return util::Error{_("Transaction amount too small")};
+        }
+
+        // Include the fee cost for outputs.
+        coin_selection_params.tx_noinputs_size += GetSerializeSizeForRecipient(recipient);
         recipients_sum += recipient.nAmount;
 
         if (recipient.fSubtractFeeFromAmount) {
@@ -1086,7 +1129,7 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
     if (change_spend_size == -1) {
         coin_selection_params.change_spend_size = DUMMY_NESTED_P2WPKH_INPUT_SIZE;
     } else {
-        coin_selection_params.change_spend_size = (size_t)change_spend_size;
+        coin_selection_params.change_spend_size = change_spend_size;
     }
 
     // Set discard feerate
@@ -1121,23 +1164,6 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
     const auto dust = GetDustThreshold(change_prototype_txout, coin_selection_params.m_discard_feerate);
     const auto change_spend_fee = coin_selection_params.m_discard_feerate.GetFee(coin_selection_params.change_spend_size);
     coin_selection_params.min_viable_change = std::max(change_spend_fee + 1, dust);
-
-    // Static vsize overhead + outputs vsize. 4 nVersion, 4 nLocktime, 1 input count, 1 witness overhead (dummy, flag, stack size)
-    coin_selection_params.tx_noinputs_size = 10 + GetSizeOfCompactSize(vecSend.size()); // bytes for output count
-
-    // vouts to the payees
-    for (const auto& recipient : vecSend)
-    {
-        CTxOut txout(recipient.nAmount, CNameScript::AddNamePrefix (GetScriptForDestination(recipient.dest), recipient.nameScript));
-
-        // Include the fee cost for outputs.
-        coin_selection_params.tx_noinputs_size += ::GetSerializeSize(txout);
-
-        if (IsDust(txout, wallet.chain().relayDustFee())) {
-            return util::Error{_("Transaction amount too small")};
-        }
-        txNew.vout.push_back(txout);
-    }
 
     // Include the fees for things that aren't inputs, excluding the change output
     const CAmount not_input_fees = coin_selection_params.m_effective_feerate.GetFee(coin_selection_params.m_subtract_fee_outputs ? 0 : coin_selection_params.tx_noinputs_size);
@@ -1179,6 +1205,12 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
            result.GetWaste(),
            result.GetSelectedValue());
 
+    // vouts to the payees
+    for (const auto& recipient : vecSend)
+    {
+        const auto fullScript = CNameScript::AddNamePrefix(GetScriptForDestination(recipient.dest), recipient.nameScript);
+        txNew.vout.emplace_back(recipient.nAmount, fullScript);
+    }
     const CAmount change_amount = result.GetChange(coin_selection_params.min_viable_change, coin_selection_params.m_change_fee);
     if (change_amount > 0) {
         CTxOut newTxOut(change_amount, scriptChange);
@@ -1433,7 +1465,7 @@ util::Result<CreatedTransactionResult> FundTransaction(CWallet& wallet, const CM
     coinControl.m_locktime = tx.nLockTime;
 
     // Set the user desired version
-    coinControl.m_version = tx.nVersion;
+    coinControl.m_version = tx.version;
 
     // Acquire the locks to prevent races to the new locked unspents between the
     // CreateTransaction call and LockCoin calls (when lockUnspents is true).

@@ -34,6 +34,7 @@
 
 
 using interfaces::FoundBlock;
+using util::SplitString;
 
 namespace wallet {
 std::string static EncodeDumpString(const std::string &str) {
@@ -909,6 +910,7 @@ static std::string RecurseImportData(const CScript& script, ImportData& import_d
     case TxoutType::NONSTANDARD:
     case TxoutType::WITNESS_UNKNOWN:
     case TxoutType::WITNESS_V1_TAPROOT:
+    case TxoutType::ANCHOR:
         return "unrecognized script";
     } // no default case, so the compiler can warn about missing cases
     NONFATAL_UNREACHABLE();

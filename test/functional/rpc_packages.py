@@ -394,7 +394,7 @@ class RPCPackagesTest(BitcoinTestFramework):
         peer = node.add_p2p_connection(P2PTxInvStore())
         txs = self.wallet.create_self_transfer_chain(chain_length=2)
         bad_child = tx_from_hex(txs[1]["hex"])
-        bad_child.nVersion = -1
+        bad_child.version = 0xffffffff
         hex_partial_acceptance = [txs[0]["hex"], bad_child.serialize().hex()]
         res = node.submitpackage(hex_partial_acceptance)
         assert_equal(res["package_msg"], "transaction failed")
@@ -489,4 +489,4 @@ class RPCPackagesTest(BitcoinTestFramework):
         assert_equal(node.getrawmempool(), [chained_txns_burn[0]["txid"]])
 
 if __name__ == "__main__":
-    RPCPackagesTest().main()
+    RPCPackagesTest(__file__).main()
