@@ -1,9 +1,10 @@
 // Copyright (c) 2024 Rose Turing
 
 #include "../names/records.h"
-#include "../names/applications.h"
-#include <string.h>
+
 #include <test/util/setup_common.h>
+
+#include <string.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -38,12 +39,6 @@ BOOST_AUTO_TEST_CASE( ipv6_record_tests ){
     test_ipv6_record.setIPv6Address("1");
     BOOST_CHECK_EQUAL(test_ipv6_record.validate(), false);
 
-}
-
-NSRecord test_ns_record;
-
-BOOST_AUTO_TEST_CASE(ns_record_tests){
-    //TODO: validation code for NSRecord::validate()
 }
 
 BOOST_AUTO_TEST_SUITE_END()

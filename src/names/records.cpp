@@ -2,8 +2,9 @@
 
 #include "records.h"
 #include "applications.h"
+
 #include <string>
- 
+
 std::string DomainRecord::getDomain(){
     return domain;
 }
@@ -21,13 +22,13 @@ DomainRecord::DomainRecord(){
 }
 
 std::string IPv4Record::getIPv4Address(){
-    return address;    
+    return address;
 }
 
 void IPv4Record::setIPv4Address(const std::string& text){
     this->address = text;
 }
-       
+
 IPv4Record::IPv4Record(std::string& domain, std::string& address)
     :DomainRecord(domain)
 {
@@ -51,13 +52,13 @@ bool IPv4Record::validate() {
 }
 
 std::string IPv6Record::getIPv6Address(){
-    return address;    
+    return address;
 }
 
 void IPv6Record::setIPv6Address(const std::string& text){
     this->address = text;
 }
- 
+
 IPv6Record::IPv6Record(std::string& domain, std::string& address)
     :DomainRecord(domain)
 {
@@ -79,35 +80,3 @@ IPv6Record::IPv6Record()
 bool IPv6Record::validate() {
     return IsValidIPV6(this->address);
 }
-
-std::string NSRecord::getNS(){
-    return this->ns;
-}
-
-void NSRecord::setNS(const std::string& text){
-    this->ns = text;
-}
-
-NSRecord::NSRecord(std::string& domain, std::string& ns)
-    :DomainRecord(domain)
-{
-    this->ns = ns;
-}
-
-NSRecord::NSRecord(std::string& domain)
-    :DomainRecord(domain)
-{
-    this->ns = "";
-}
-
-NSRecord::NSRecord()
-    :DomainRecord()
-{
-    this->ns = "";
-}
-
-//TODO: jeremy my man i have no idea how to validate this
-bool NSRecord::validate(){
-    return false;
-}
- 

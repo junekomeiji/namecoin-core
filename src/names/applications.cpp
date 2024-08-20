@@ -5,18 +5,14 @@
 #include <names/applications.h>
 
 #include <names/encoding.h>
-
-#include <regex>
-
 #include <univalue.h>
-
 #include <logging.h>
+#include <netaddress.h>
 
 #include <boost/asio.hpp>
-
 #include <boost/algorithm/string.hpp>
 
-#include <netaddress.h>
+#include <regex>
 
 namespace
 {
@@ -227,15 +223,19 @@ GetMinimalJSON (const std::string& text){
 bool
 IsValidIPV4 (const std::string& text){
     boost::system::error_code ec;
-    boost::asio::ip::address_v4::from_string(text, ec);
+    boost::asio::ip::address_v4 ipv4;
     
+    ipv4 = boost::asio::ip::make_address_v4(text, ec);
+
     return !ec;
 }
 
 bool
 IsValidIPV6 (const std::string& text){
     boost::system::error_code ec;
-    boost::asio::ip::address_v6::from_string(text, ec);
+    boost::asio::ip::address_v6 ipv6;
+    
+    ipv6 = boost::asio::ip::make_address_v6(text, ec);
     
     return !ec;
 }
@@ -252,12 +252,11 @@ IsValidOnionAddress(const std::string& text){
 
 bool
 IsValidI2PAddress(const std::string& text){
-    if(!text.ends_with(".i2p")){
+    if(!text.ends_with("b32.i2p")){
         return false;
     } else {
         CNetAddr cnet;
         return cnet.SetSpecial(text);
     }
+
 }
-
-
