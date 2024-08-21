@@ -11,6 +11,7 @@
 #include <names/applications.h>
 #include <names/records.h>
 #include <univalue.h>
+#include <vector>
 
 #include <QMessageBox>
 #include <QClipboard>
@@ -108,8 +109,7 @@ void ConfigureNameDialog::accept()
         
         bool invalidip = false;
 
-        const auto &obj = uv.get_obj();
-        for (const auto & [key, value] : obj){
+        /* for (const auto & [key, value] : obj){
             if (key == "ip"){
                 for(const auto & item : value.get_array()){
                     IPv4Record temp_record("", item);
@@ -125,6 +125,29 @@ void ConfigureNameDialog::accept()
                         invalidip = true;
                     }
                 }
+            }
+        } */
+
+        std::vector<UniValue> ipvalues = uv.find_value("ip").getValues();
+
+        for(UniValue ips : ipvalues){
+
+            std::string empty = "";
+            std::string ip = ips.get_str();
+            IPv4Record temp_record(empty, ip);
+            if(!temp_record.validate()){
+                invalidip = true;
+            }
+        }
+        std::vector<UniValue> ip6values = uv.find_value("ip6").getValues();
+
+        for(UniValue ips : ip6values){
+
+            std::string empty = "";
+            std::string ip = ips.get_str();
+            IPv6Record temp_record(empty, ip);
+            if(!temp_record.validate()){
+                invalidip = true;
             }
         }
 
