@@ -1,4 +1,6 @@
-//Copyright (c) 2024 Rose Turing
+// Copyright (c) 2024 Rose Turing
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef H_BITCOIN_NAMES_DOMAIN
 #define H_BITCOIN_NAMES_DOMAIN

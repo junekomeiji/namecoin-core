@@ -183,14 +183,16 @@ DescFromName (const valtype& name, NameNamespace ns)
 }
 
 bool
-IsValidJSONOrEmptyString (const std::string& text){
+IsValidJSONOrEmptyString (const std::string& text)
+{
     UniValue v;
 
     return text.empty() || v.read(text);
 }    
 
 bool
-IsMinimalJSONOrEmptyString (const std::string& text){
+IsMinimalJSONOrEmptyString (const std::string& text)
+{
     UniValue v;
     if(text.empty()){
         return true;
@@ -212,7 +214,8 @@ IsMinimalJSONOrEmptyString (const std::string& text){
 }
 
 std::string
-GetMinimalJSON (const std::string& text){
+GetMinimalJSON (const std::string& text)
+{
     UniValue v;
 
     v.read(text);
@@ -221,7 +224,8 @@ GetMinimalJSON (const std::string& text){
 }
 
 bool
-IsValidIPV4 (const std::string& text){
+IsValidIPV4 (const std::string& text)
+{
     boost::system::error_code ec;
     boost::asio::ip::address_v4 ipv4;
     
@@ -231,7 +235,8 @@ IsValidIPV4 (const std::string& text){
 }
 
 bool
-IsValidIPV6 (const std::string& text){
+IsValidIPV6 (const std::string& text)
+{
     boost::system::error_code ec;
     boost::asio::ip::address_v6 ipv6;
     
@@ -241,7 +246,8 @@ IsValidIPV6 (const std::string& text){
 }
 
 bool
-IsValidOnionAddress(const std::string& text){
+IsValidOnionAddress(const std::string& text)
+{
     if(!text.ends_with(".onion")){
         return false;
     } else {
@@ -251,8 +257,9 @@ IsValidOnionAddress(const std::string& text){
 }
 
 bool
-IsValidI2PAddress(const std::string& text){
-    if(!text.ends_with("b32.i2p")){
+IsValidI2PAddress(const std::string& text)
+{
+    if(!text.ends_with(".b32.i2p")){
         return false;
     } else {
         CNetAddr cnet;
