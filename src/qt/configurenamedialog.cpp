@@ -9,6 +9,8 @@
 #include <qt/walletmodel.h>
 #include <wallet/wallet.h>
 #include <names/applications.h>
+#include <names/records.h>
+#include <univalue.h>
 
 #include <QMessageBox>
 #include <QClipboard>
@@ -100,7 +102,53 @@ void ConfigureNameDialog::accept()
         }
 
     } else {
-        QDialog::accept();
+
+        UniValue uv;
+        uv.read(data);
+        
+        bool invalidip = false;
+
+        const auto &obj = uv.get_obj();
+        for (const auto & [key, value] : obj){
+            if (key == "ip"){
+                for(const auto & item : value.get_array()){
+                    IPv4Record temp_record("", item);
+                    if(!temp_record.validate()){
+                        invalidip = true;
+                    }
+                }
+            }
+            if (key == "ip6"){
+                for(const auto & item : value.get_array()){
+                    IPv6Record temp_record("", item);
+                    if(!temp_record.validate()){
+                        invalidip = true;
+                    }
+                }
+            }
+        }
+
+        if(invalidip){
+            QMessageBox MessageBoxInvalidIPAddress;
+            MessageBoxInvalidIPAddress.setIcon(QMessageBox::Warning);
+            MessageBoxInvalidIPAddress.setWindowTitle(tr("Invalid IP Address"));
+            MessageBoxInvalidIPAddress.setText(tr("Are you sure you want to continue anyway? The inputted IP addresses are invalid and will not resolve to anything.")); 
+            MessageBoxInvalidIPAddress.addButton(QMessageBox::Ok);
+            MessageBoxInvalidIPAddress.addButton(QMessageBox::Cancel);
+        
+            MessageBoxInvalidIPAddress.exec();
+
+            QMessageBox::ButtonRole reply = MessageBoxInvalidIPAddress.buttonRole(MessageBoxInvalidIPAddress.clickedButton());
+
+            if(reply == QMessageBox::AcceptRole){
+                QDialog::accept();
+            }
+
+        } else {
+
+            QDialog::accept();
+
+        }
     }
 
 }
