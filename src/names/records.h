@@ -1,4 +1,6 @@
 // Copyright (c) 2024 Rose Turing
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php
 
 #ifndef H_BITCOIN_NAMES_RECORDS
 #define H_BITCOIN_NAMES_RECORDS
@@ -11,7 +13,6 @@ class DomainRecord{
         std::string domain;
 
     public:
-
         std::string getDomain();
         void setDomain(const std::string& text);
 
@@ -22,35 +23,32 @@ class DomainRecord{
 
 };
 
-class IPv4Record : public DomainRecord{
-
+class AddressRecord : public DomainRecord{
+        
     private:
         std::string address;
 
     public:
-        std::string getIPv4Address();
-        void setIPv4Address(const std::string& text);
+        std::string getAddress();
+        void setAddress(const std::string& text);
 
-        IPv4Record(std::string& domain, std::string& address);
-        IPv4Record(std::string& domain);
-        IPv4Record();
+        using DomainRecord::DomainRecord;
+        AddressRecord(std::string& domain, std::string& address);
 
+        virtual bool validate() override = 0;
+};
+
+class IPv4Record : public AddressRecord{
+
+    public:
+        using AddressRecord::AddressRecord;
         bool validate() override;
 };
 
-class IPv6Record : public DomainRecord{
-
-    private:
-        std::string address;
+class IPv6Record : public AddressRecord{
 
     public:
-        std::string getIPv6Address();
-        void setIPv6Address(const std::string& text);
-
-        IPv6Record(std::string& domain, std::string& address);
-        IPv6Record(std::string& domain);
-        IPv6Record();
-
+        using AddressRecord::AddressRecord;
         bool validate() override;
 };
 

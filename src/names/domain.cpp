@@ -1,6 +1,11 @@
-#include "applications.h"
-#include "domain.h"
-#include "records.h"
+// Copyright (c) 2024 Rose Turing
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+#include <names/domain.h>
+
+#include <names/applications.h>
+#include <names/records.h>
 
 #include <string>
 #include <list>

@@ -1,4 +1,6 @@
 // Copyright (c) 2024 Rose Turing
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "../names/records.h"
 
@@ -17,12 +19,12 @@ BOOST_AUTO_TEST_CASE( ipv4_record_tests ){
     test_ipv4_record.setDomain("namecoin.bit");
     BOOST_CHECK(test_ipv4_record.getDomain() == "namecoin.bit");
 
-    test_ipv4_record.setIPv4Address("192.168.1.1");
-    BOOST_CHECK(test_ipv4_record.getIPv4Address() == "192.168.1.1");
+    test_ipv4_record.setAddress("192.168.1.1");
+    BOOST_CHECK(test_ipv4_record.getAddress() == "192.168.1.1");
 
     BOOST_CHECK_EQUAL(test_ipv4_record.validate(), true);
 
-    test_ipv4_record.setIPv4Address("1");
+    test_ipv4_record.setAddress("1");
     BOOST_CHECK_EQUAL(test_ipv4_record.validate(), false);
 
 }
@@ -31,12 +33,12 @@ IPv6Record test_ipv6_record;
 
 BOOST_AUTO_TEST_CASE( ipv6_record_tests ){
     
-    test_ipv6_record.setIPv6Address("0:0:0:0:0:0:0:1");
-    BOOST_CHECK(test_ipv6_record.getIPv6Address() == "0:0:0:0:0:0:0:1");
+    test_ipv6_record.setAddress("0:0:0:0:0:0:0:1");
+    BOOST_CHECK(test_ipv6_record.getAddress() == "0:0:0:0:0:0:0:1");
 
     BOOST_CHECK_EQUAL(test_ipv6_record.validate(), true);
 
-    test_ipv6_record.setIPv6Address("1");
+    test_ipv6_record.setAddress("1");
     BOOST_CHECK_EQUAL(test_ipv6_record.validate(), false);
 
 }

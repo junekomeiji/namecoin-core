@@ -165,6 +165,12 @@ BOOST_AUTO_TEST_CASE( valid_onion )
 {
     BOOST_CHECK_EQUAL(IsValidOnionAddress("https://google.com"), false);
 
+    BOOST_CHECK_EQUAL(IsValidOnionAddress("https://2gzyxa5ihm7nsggfxnu52rck2vv4rvmdlkiu3zzui5du4xyclen53wid.onion"), false);
+
+    BOOST_CHECK_EQUAL(IsValidOnionAddress("https://i2p-projekt.i2p"), false);
+
+    BOOST_CHECK_EQUAL(IsValidOnionAddress("google.com"), false);
+
     BOOST_CHECK_EQUAL(IsValidOnionAddress("2gzyxa5ihm7nsggfxnu52rck2vv4rvmdlkiu3zzui5du4xyclen53wid.onion"), true);
 
     BOOST_CHECK_EQUAL(IsValidOnionAddress("i2p-projekt.i2p"), false);
@@ -173,6 +179,12 @@ BOOST_AUTO_TEST_CASE( valid_onion )
 BOOST_AUTO_TEST_CASE( valid_i2p )
 {
     BOOST_CHECK_EQUAL(IsValidI2PAddress("https://google.com"), false);
+
+    BOOST_CHECK_EQUAL(IsValidI2PAddress("https://2gzyxa5ihm7nsggfxnu52rck2vv4rvmdlkiu3zzui5du4xyclen53wid.onion"), false);
+
+    BOOST_CHECK_EQUAL(IsValidI2PAddress("https://udhdrtrcetjm5sxzskjyr5ztpeszydbh4dpl3pl4utgqqw2v4jna.b32.i2p"), false);
+
+    BOOST_CHECK_EQUAL(IsValidI2PAddress("google.com"), false);
 
     BOOST_CHECK_EQUAL(IsValidI2PAddress("2gzyxa5ihm7nsggfxnu52rck2vv4rvmdlkiu3zzui5du4xyclen53wid.onion"), false);
 
