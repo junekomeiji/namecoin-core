@@ -24,7 +24,7 @@ class DomainRecord{
 };
 
 class AddressRecord : public DomainRecord{
-        
+
     private:
         std::string address;
 

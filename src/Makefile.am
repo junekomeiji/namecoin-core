@@ -727,7 +727,7 @@ libbitcoin_common_a_SOURCES = \
   merkleblock.cpp \
   names/applications.cpp \
   names/common.cpp \
-  names/domain.cpp \ 
+  names/domain.cpp \
   names/encoding.cpp \
   names/records.cpp \
   net_types.cpp \

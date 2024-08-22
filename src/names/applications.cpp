@@ -188,7 +188,7 @@ IsValidJSONOrEmptyString (const std::string& text)
     UniValue v;
 
     return text.empty() || v.read(text);
-}    
+}
 
 bool
 IsMinimalJSONOrEmptyString (const std::string& text)
@@ -196,14 +196,14 @@ IsMinimalJSONOrEmptyString (const std::string& text)
     UniValue v;
     if(text.empty()){
         return true;
-    } 
+    }
 
-    if(!v.read(text)){ 
+    if(!v.read(text)){
         return false;
-    } 
+    }
 
     const std::string minimalJSON = GetMinimalJSON(text);
-    
+
     const bool isMinimal = (text == minimalJSON);
 
     if(!isMinimal){
@@ -228,7 +228,7 @@ IsValidIPV4 (const std::string& text)
 {
     boost::system::error_code ec;
     boost::asio::ip::address_v4 ipv4;
-    
+
     ipv4 = boost::asio::ip::make_address_v4(text, ec);
 
     return !ec;
@@ -239,9 +239,9 @@ IsValidIPV6 (const std::string& text)
 {
     boost::system::error_code ec;
     boost::asio::ip::address_v6 ipv6;
-    
+
     ipv6 = boost::asio::ip::make_address_v6(text, ec);
-    
+
     return !ec;
 }
 

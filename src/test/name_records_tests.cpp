@@ -15,7 +15,7 @@ BOOST_AUTO_TEST_SUITE(name_records_tests)
 IPv4Record test_ipv4_record;
 
 BOOST_AUTO_TEST_CASE( ipv4_record_tests ){
-    
+
     test_ipv4_record.setDomain("namecoin.bit");
     BOOST_CHECK(test_ipv4_record.getDomain() == "namecoin.bit");
 
@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_CASE( ipv4_record_tests ){
 IPv6Record test_ipv6_record;
 
 BOOST_AUTO_TEST_CASE( ipv6_record_tests ){
-    
+
     test_ipv6_record.setAddress("0:0:0:0:0:0:0:1");
     BOOST_CHECK(test_ipv6_record.getAddress() == "0:0:0:0:0:0:0:1");
 
