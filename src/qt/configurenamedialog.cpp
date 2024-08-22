@@ -56,6 +56,8 @@ void ConfigureNameDialog::accept()
 
     QString addr = ui->transferTo->text();
     std::string data = ui->dataEdit->text().toStdString();
+    UniValue uv;
+    uv.read(data);
 
     if (addr != "" && !walletModel->validateAddress(addr))
     {
@@ -102,52 +104,37 @@ void ConfigureNameDialog::accept()
             QDialog::accept();
         }
 
-    } else {
+    } else if(!uv.find_value("ip").isNull() | !uv.find_value("ip6").isNull()) {
 
-        UniValue uv;
-        uv.read(data);
-        
         bool invalidip = false;
+        const UniValue& v = uv.find_value("ip");
+        const UniValue& w = uv.find_value("ip6");
 
-        /* for (const auto & [key, value] : obj){
-            if (key == "ip"){
-                for(const auto & item : value.get_array()){
-                    IPv4Record temp_record("", item);
-                    if(!temp_record.validate()){
-                        invalidip = true;
-                    }
-                }
-            }
-            if (key == "ip6"){
-                for(const auto & item : value.get_array()){
-                    IPv6Record temp_record("", item);
-                    if(!temp_record.validate()){
-                        invalidip = true;
-                    }
-                }
-            }
-        } */
-
-        std::vector<UniValue> ipvalues = uv.find_value("ip").getValues();
-
-        for(UniValue ips : ipvalues){
-
+        if(v.type() != UniValue::VSTR){
+            invalidip = true;
+        } else {
+            const UniValue& ips = v.get_array();
             std::string empty = "";
-            std::string ip = ips.get_str();
-            IPv4Record temp_record(empty, ip);
-            if(!temp_record.validate()){
-                invalidip = true;
+            for (unsigned int i = 0; i < ips.size(); ++i){
+                std::string str = ips[i].get_str();
+                IPv4Record temp_record(empty, str);
+                if(!temp_record.validate()){
+                    invalidip = true;
+                }
             }
         }
-        std::vector<UniValue> ip6values = uv.find_value("ip6").getValues();
 
-        for(UniValue ips : ip6values){
-
+        if(w.type() != UniValue::VSTR){
+            invalidip = true;
+        } else {
+            const UniValue& ips = w.get_array();
             std::string empty = "";
-            std::string ip = ips.get_str();
-            IPv6Record temp_record(empty, ip);
-            if(!temp_record.validate()){
-                invalidip = true;
+            for (unsigned int i = 0; i < ips.size(); ++i){
+                std::string str = ips[i].get_str();
+                IPv6Record temp_record(empty, str);
+                if(!temp_record.validate()){
+                    invalidip = true;
+                }
             }
         }
 
@@ -166,15 +153,15 @@ void ConfigureNameDialog::accept()
             if(reply == QMessageBox::AcceptRole){
                 QDialog::accept();
             }
-
-        } else {
-
-            QDialog::accept();
-
         }
-    }
 
+    } else {
+
+        QDialog::accept();
+
+    }
 }
+
 
 void ConfigureNameDialog::setModel(WalletModel *walletModel)
 {
