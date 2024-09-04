@@ -35,6 +35,8 @@ class AddressRecord : public DomainRecord{
         using DomainRecord::DomainRecord;
         AddressRecord(std::string& domain, std::string& address);
 
+        constexpr bool operator==(const AddressRecord& a);
+
         virtual bool validate() override = 0;
 };
 

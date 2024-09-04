@@ -37,6 +37,10 @@ void AddressRecord::setAddress(const std::string& text){
     this->address = text;
 }
 
+constexpr bool AddressRecord::operator==(const AddressRecord& a){
+    return this->getAddress() == a.getAddress() & this->getDomain() == a.getDomain();
+}
+
 bool IPv4Record::validate() {
     return IsValidIPV4(this->getAddress());
 }

@@ -191,4 +191,21 @@ BOOST_AUTO_TEST_CASE( valid_i2p )
     BOOST_CHECK_EQUAL(IsValidI2PAddress("udhdrtrcetjm5sxzskjyr5ztpeszydbh4dpl3pl4utgqqw2v4jna.b32.i2p"), true);
 }
 
+UniValue empty = UniValue("");
+UniValue good_ip4 = UniValue("{\"ip\":[\"192.168.1.1\"]}");
+UniValue bad_ip4 = UniValue("{\"ip\":[\"123\"]}");
+UniValue good_ip6 = UniValue("{\"ip6\":[\"0:0:0:0:0:0:0:1\"]}");
+UniValue bad_ip6 = UniValue("{\"ip6\":[\"123\"]}");
+
+std::string blank = "";
+std::string good_ip = "192.186.1.1";
+
+std::vector<IPv4Record> good_ip4vec = {IPv4Record(blank, good_ip)};
+
+BOOST_AUTO_TEST_CASE( unwrap_univalue ){
+    
+    BOOST_CHECK(UnwrapIPv4Univalue(good_ip4) == good_ip4vec);    
+
+}
+
 BOOST_AUTO_TEST_SUITE_END()

@@ -5,6 +5,7 @@
 #include <names/applications.h>
 
 #include <names/encoding.h>
+#include <names/records.h>
 #include <univalue.h>
 #include <logging.h>
 #include <netaddress.h>
@@ -13,6 +14,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include <regex>
+#include <vector>
 
 namespace
 {
@@ -265,5 +267,42 @@ IsValidI2PAddress(const std::string& text)
         CNetAddr cnet;
         return cnet.SetSpecial(text);
     }
+
+}
+
+std::vector<IPv4Record>
+UnwrapIPv4Univalue(const UniValue uv)
+{
+ 
+    std::vector<IPv4Record> iprecords;
+    const UniValue& ips = uv.find_value("ip").get_array();
+
+    std::string empty = "";
+
+    for(unsigned int i = 0; i < ips.size(); ++i){
+        std::string str = ips[i].get_str();
+        iprecords.push_back(IPv4Record(empty, str));
+    }
+
+    return iprecords;
+
+}
+
+
+std::vector<IPv6Record>
+UnwrapIPv6Univalue(const UniValue uv)
+{
+ 
+    std::vector<IPv6Record> iprecords;
+    const UniValue& ips = uv.find_value("ip6").get_array();
+
+    std::string empty = "";
+
+    for(unsigned int i = 0; i < ips.size(); ++i){
+        std::string str = ips[i].get_str();
+        iprecords.push_back(IPv6Record(empty, str));
+    }
+
+    return iprecords;
 
 }

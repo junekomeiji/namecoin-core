@@ -6,8 +6,11 @@
 #define H_BITCOIN_NAMES_APPLICATIONS
 
 #include <script/script.h>
+#include <names/records.h>
+#include <univalue.h>
 
 #include <string>
+#include <vector>
 
 enum class NameNamespace
 {
@@ -37,5 +40,8 @@ bool IsValidOnionAddress(const std::string& text);
 
 bool IsValidI2PAddress(const std::string& text);
 
+std::vector<IPv4Record> UnwrapIPv4Univalue(const UniValue uv);
+
+std::vector<IPv6Record> UnwrapIPv6Univalue(const UniValue uv);
 
 #endif // H_BITCOIN_NAMES_APPLICATIONS

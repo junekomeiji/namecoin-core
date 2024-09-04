@@ -9,6 +9,8 @@
 #include <qt/walletmodel.h>
 #include <wallet/wallet.h>
 #include <names/applications.h>
+#include <names/records.h>
+#include <univalue.h>
 
 #include <QMessageBox>
 #include <QClipboard>
@@ -54,6 +56,10 @@ void ConfigureNameDialog::accept()
     QString addr = ui->transferTo->text();
     std::string data = ui->dataEdit->text().toStdString();
 
+    UniValue datauni = UniValue(data);
+    std::vector<IPv4Record> ipv4s = UnwrapIPv4Univalue(datauni);
+    std::vector<IPv6Record> ipv6s = UnwrapIPv6Univalue(datauni);
+
     if (addr != "" && !walletModel->validateAddress(addr))
     {
         ui->transferTo->setValid(false);
@@ -97,6 +103,35 @@ void ConfigureNameDialog::accept()
             data = minimalJSONData;
 
             QDialog::accept();
+        }
+
+    } else if(!ipv4s.empty() | !ipv6s.empty()){
+        
+        bool invalidip = true;
+
+        for(IPv4Record ip4 : ipv4s){
+            if(!ip4.validate()) invalidip = false;
+        }
+
+        for(IPv6Record ip6 : ipv6s){
+            if(!ip6.validate()) invalidip = false;
+        }    
+
+        if(invalidip){
+            QMessageBox MessageBoxInvalidIP;
+            MessageBoxInvalidIP.setIcon(QMessageBox::Warning);
+            MessageBoxInvalidIP.setWindowTitle(tr("Invalid IP"));
+            MessageBoxInvalidIP.setText(tr("Are you sure you want to continue anyway? The IPs given are invalid and may not lead to anything.")); 
+            MessageBoxInvalidIP.addButton(QMessageBox::Ok);
+            MessageBoxInvalidIP.addButton(QMessageBox::Cancel);
+        
+            MessageBoxInvalidIP.exec();
+
+            QMessageBox::ButtonRole reply = MessageBoxInvalidIP.buttonRole(MessageBoxInvalidIP.clickedButton());
+
+            if(reply == QMessageBox::AcceptRole){
+                QDialog::accept();
+            } 
         }
 
     } else {
