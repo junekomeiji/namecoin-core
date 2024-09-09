@@ -6,6 +6,7 @@
 #include <names/applications.h>
 #include <names/encoding.h>
 #include <test/util/setup_common.h>
+#include <logging.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -205,6 +206,7 @@ std::vector<IPv4Record> good_ip4vec = {IPv4Record(blank, good_ip)};
 BOOST_AUTO_TEST_CASE( unwrap_univalue ){
     
     BOOST_CHECK(UnwrapIPv4Univalue(good_ip4) == good_ip4vec);    
+    LogDebug(BCLog::NAMES, "good_ip4: %s \n", good_ip);
 
 }
 

@@ -7,7 +7,7 @@
 
 #include <string>
 
-std::string DomainRecord::getDomain(){
+std::string DomainRecord::getDomain() const{
     return domain;
 }
 
@@ -29,16 +29,12 @@ AddressRecord::AddressRecord(std::string& domain, std::string& address)
     this->address = address;
 }
 
-std::string AddressRecord::getAddress(){
+std::string AddressRecord::getAddress() const{
     return address;
 }
 
 void AddressRecord::setAddress(const std::string& text){
     this->address = text;
-}
-
-constexpr bool AddressRecord::operator==(const AddressRecord& a){
-    return this->getAddress() == a.getAddress() & this->getDomain() == a.getDomain();
 }
 
 bool IPv4Record::validate() {

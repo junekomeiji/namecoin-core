@@ -275,7 +275,7 @@ UnwrapIPv4Univalue(const UniValue uv)
 {
  
     std::vector<IPv4Record> iprecords;
-    const UniValue& ips = uv.find_value("ip").get_array();
+    const UniValue& ips = uv.find_value("ip");
 
     std::string empty = "";
 

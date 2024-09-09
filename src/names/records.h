@@ -13,7 +13,7 @@ class DomainRecord{
         std::string domain;
 
     public:
-        std::string getDomain();
+        std::string getDomain() const;
         void setDomain(const std::string& text);
 
         DomainRecord(std::string& domain);
@@ -29,13 +29,15 @@ class AddressRecord : public DomainRecord{
         std::string address;
 
     public:
-        std::string getAddress();
+        std::string getAddress() const;
         void setAddress(const std::string& text);
 
         using DomainRecord::DomainRecord;
         AddressRecord(std::string& domain, std::string& address);
 
-        constexpr bool operator==(const AddressRecord& a);
+        bool operator==(const AddressRecord& a) const{
+    return (this->getAddress() == a.getAddress()) && (this->getDomain() == a.getDomain());
+}
 
         virtual bool validate() override = 0;
 };
