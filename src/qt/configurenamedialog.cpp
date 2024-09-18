@@ -56,7 +56,8 @@ void ConfigureNameDialog::accept()
     QString addr = ui->transferTo->text();
     std::string data = ui->dataEdit->text().toStdString();
 
-    UniValue datauni = UniValue(data);
+    UniValue datauni;
+    datauni.read(data);
     std::vector<IPv4Record> ipv4s = UnwrapIPv4Univalue(datauni);
     std::vector<IPv6Record> ipv6s = UnwrapIPv6Univalue(datauni);
 

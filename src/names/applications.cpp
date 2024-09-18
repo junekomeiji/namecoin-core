@@ -294,7 +294,7 @@ UnwrapIPv6Univalue(const UniValue uv)
 {
  
     std::vector<IPv6Record> iprecords;
-    const UniValue& ips = uv.find_value("ip6").get_array();
+    const UniValue& ips = uv.find_value("ip6");
 
     std::string empty = "";
 

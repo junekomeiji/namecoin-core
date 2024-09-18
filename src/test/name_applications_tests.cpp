@@ -5,8 +5,12 @@
 
 #include <names/applications.h>
 #include <names/encoding.h>
+#include <names/records.h>
 #include <test/util/setup_common.h>
 #include <logging.h>
+#include <univalue.h>
+
+#include <vector>
 
 #include <boost/test/unit_test.hpp>
 
@@ -192,21 +196,26 @@ BOOST_AUTO_TEST_CASE( valid_i2p )
     BOOST_CHECK_EQUAL(IsValidI2PAddress("udhdrtrcetjm5sxzskjyr5ztpeszydbh4dpl3pl4utgqqw2v4jna.b32.i2p"), true);
 }
 
-UniValue empty = UniValue("");
-UniValue good_ip4 = UniValue("{\"ip\":[\"192.168.1.1\"]}");
-UniValue bad_ip4 = UniValue("{\"ip\":[\"123\"]}");
-UniValue good_ip6 = UniValue("{\"ip6\":[\"0:0:0:0:0:0:0:1\"]}");
-UniValue bad_ip6 = UniValue("{\"ip6\":[\"123\"]}");
-
 std::string blank = "";
-std::string good_ip = "192.186.1.1";
+std::string good_ip = "192.168.1.1";
 
+UniValue empty = UniValue("");
+UniValue good_ip4;
+UniValue bad_ip4;
+UniValue good_ip6 = UniValue();
+UniValue bad_ip6 = UniValue();
+
+//
 std::vector<IPv4Record> good_ip4vec = {IPv4Record(blank, good_ip)};
 
 BOOST_AUTO_TEST_CASE( unwrap_univalue ){
-    
-    BOOST_CHECK(UnwrapIPv4Univalue(good_ip4) == good_ip4vec);    
-    LogDebug(BCLog::NAMES, "good_ip4: %s \n", good_ip);
+  
+    good_ip4.read("{\"ip\":[\"192.168.1.1\"]}");
+    bad_ip4.read("{\"ip\":[\"123\"]}");
+    good_ip6.read("{\"ip6\":[\"0:0:0:0:0:0:0:1\"]}");
+    bad_ip6.read("{\"ip6\":[\"123\"]}");
+
+    BOOST_CHECK(UnwrapIPv4Univalue(good_ip4) == good_ip4vec);
 
 }
 

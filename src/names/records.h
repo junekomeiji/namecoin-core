@@ -6,6 +6,7 @@
 #define H_BITCOIN_NAMES_RECORDS
 
 #include <string>
+#include <iostream>
 
 class DomainRecord{
 
@@ -38,6 +39,11 @@ class AddressRecord : public DomainRecord{
         bool operator==(const AddressRecord& a) const{
     return (this->getAddress() == a.getAddress()) && (this->getDomain() == a.getDomain());
 }
+
+        std::ostream& operator<<(std::ostream& os){
+            os << this->getAddress() << " " << this->getDomain() << "\n";
+            return os;
+        }
 
         virtual bool validate() override = 0;
 };
