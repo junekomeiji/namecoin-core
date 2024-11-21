@@ -25,9 +25,9 @@
      <property name="frameShadow">
       <enum>QFrame::Sunken</enum>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <item>
-       <widget class="QLabel" name="label_4">
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+          <widget class="QLabel" name="label_4">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
           <horstretch>0</horstretch>
@@ -36,10 +36,10 @@
         </property>
         <property name="text">
          <string>&amp;New name:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-        </property>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
         <property name="buddy">
          <cstring>registerName</cstring>
         </property>
@@ -57,26 +57,26 @@
       </item>
       <item>
        <widget class="QLabel" name="label">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Use &lt;strong&gt;d/&lt;/strong&gt; prefix for domain names. E.g. &lt;strong&gt;d/mysite&lt;/strong&gt; will register &lt;strong&gt;mysite.bit&lt;/strong&gt;&lt;br&gt;See &lt;a href=&quot;https://github.com/namecoin/proposals/blob/master/ifa-0001.md#keys&quot;&gt;Domain Names: Keys&lt;/a&gt; for reference. Other prefixes can be used for miscellaneous purposes (not domain names).&lt;/p&gt;</string>
-        </property>
-        <property name="textFormat">
-         <enum>Qt::RichText</enum>
-        </property>
-        <property name="wordWrap">
-         <bool>true</bool>
-        </property>
-        <property name="openExternalLinks">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Use &lt;strong&gt;d/&lt;/strong&gt; prefix for domain names. E.g. &lt;strong&gt;d/mysite&lt;/strong&gt; will register &lt;strong&gt;mysite.bit&lt;/strong&gt;&lt;br&gt;See the &lt;a href=&quot;https://github.com/namecoin/proposals/blob/master/ifa-0001.md#keys&quot;&gt;Namecoin Domain Names specification&lt;/a&gt; for reference. Other prefixes can be used for miscellaneous purposes (not domain names).&lt;/p&gt;</string>
+       </property>
+       <property name="textFormat">
+        <enum>Qt::RichText</enum>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+       <property name="openExternalLinks">
+        <bool>true</bool>
+       </property>
+      </widget>
+    </item>
       <item>
        <widget class="QLabel" name="statusLabel">
         <property name="sizePolicy">
@@ -118,27 +118,27 @@
         </property>
         <property name="icon">
          <iconset resource="../bitcoin.qrc">
-          <normaloff>:/icons/send</normaloff>:/icons/send</iconset>
-        </property>
-        <property name="default">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="verticalSpacer">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-     </layout>
+       <normaloff>:/icons/send</normaloff>:/icons/send</iconset>
+     </property>
+     <property name="default">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
     </widget>
    </item>
   </layout>
