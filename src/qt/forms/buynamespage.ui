@@ -66,10 +66,10 @@
        </property>
        <property name="text">
         <string>New domain name:</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-       </property>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
       </widget>
       <widget class="QLabel" name="label_5">
        <property name="geometry">
@@ -157,26 +157,26 @@
          <height>61</height>
         </rect>
        </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Use &lt;strong&gt;d/&lt;/strong&gt; prefix for domain names. E.g. &lt;strong&gt;d/mysite&lt;/strong&gt; will register &lt;strong&gt;mysite.bit&lt;/strong&gt;&lt;br&gt;See the &lt;a href=&quot;https://github.com/namecoin/proposals/blob/master/ifa-0001.md#keys&quot;&gt;Namecoin Domain Names specification&lt;/a&gt; for reference. Other prefixes can be used for miscellaneous purposes (not domain names).&lt;/p&gt;</string>
-       </property>
-       <property name="textFormat">
-        <enum>Qt::RichText</enum>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-       <property name="openExternalLinks">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QWidget" name="layoutWidget">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Use &lt;strong&gt;d/&lt;/strong&gt; prefix for domain names. E.g. &lt;strong&gt;d/mysite&lt;/strong&gt; will register &lt;strong&gt;mysite.bit&lt;/strong&gt;&lt;br&gt;See &lt;a href=&quot;https://github.com/namecoin/proposals/blob/master/ifa-0001.md#keys&quot;&gt;Domain Names: Keys&lt;/a&gt; for reference. Other prefixes can be used for miscellaneous purposes (not domain names).&lt;/p&gt;</string>
+        </property>
+        <property name="textFormat">
+         <enum>Qt::RichText</enum>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+        <property name="openExternalLinks">
+         <bool>true</bool>
+        </property>
+        </widget>
+        <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
          <x>0</x>
@@ -359,23 +359,22 @@
       <iconset>
        <normaloff>:/icons/send</normaloff>:/icons/send</iconset>
      </property>
-     <property name="default">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
+        <property name="default">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
    </item>
   </layout>
        <!--
