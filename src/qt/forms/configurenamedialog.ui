@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>514</width>
-    <height>330</height>
+    <width>441</width>
+    <height>351</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -33,9 +33,6 @@
        <property name="text">
         <string>Name:</string>
        </property>
-       <property name="buddy">
-        <cstring>dataEdit</cstring>
-       </property>
       </widget>
      </item>
      <item row="1" column="1">
@@ -48,67 +45,148 @@
        </property>
       </widget>
      </item>
+     <item row="2" column="1">
+      <widget class="QTabWidget" name="tabWidget">
+       <property name="minimumSize">
+        <size>
+         <width>350</width>
+         <height>115</height>
+        </size>
+       </property>
+       <property name="currentIndex">
+        <number>1</number>
+       </property>
+       <widget class="QWidget" name="ASCII">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <attribute name="title">
+         <string>ASCII</string>
+        </attribute>
+        <widget class="QLabel" name="label_5">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>30</y>
+           <width>361</width>
+           <height>41</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>JSON string, e.g. {&amp;quot;ip&amp;quot;: [&amp;quot;1.2.3.4&amp;quot;, &amp;quot;1.2.3.5&amp;quot;]}&lt;br&gt;See &lt;a href=&quot;https://github.com/namecoin/proposals&quot;&gt;JSON value specifications&lt;/a&gt;.</string>
+         </property>
+         <property name="openExternalLinks">
+          <bool>true</bool>
+         </property>
+        </widget>
+        <widget class="QWidget" name="layoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>342</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="transferToLayout_3">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="sizeConstraint">
+           <enum>QLayout::SetDefaultConstraint</enum>
+          </property>
+          <item>
+           <widget class="QLineEdit" name="dataEdit_2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>340</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Enter JSON string that will be associated with the name</string>
+            </property>
+            <property name="maxLength">
+             <number>520000</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="Hex">
+        <attribute name="title">
+         <string>Hex</string>
+        </attribute>
+        <widget class="QLabel" name="label_6">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>30</y>
+           <width>361</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Hex data is only recommended for power users&lt;br&gt;and developers.</string>
+         </property>
+         <property name="openExternalLinks">
+          <bool>true</bool>
+         </property>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_2">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>342</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="transferToLayout_4">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="sizeConstraint">
+           <enum>QLayout::SetDefaultConstraint</enum>
+          </property>
+          <item>
+           <widget class="QLineEdit" name="dataEditHex">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>340</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Enter JSON string that will be associated with the name</string>
+            </property>
+            <property name="maxLength">
+             <number>520000</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </widget>
+     </item>
      <item row="3" column="0">
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>&amp;Data:</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-       </property>
-       <property name="buddy">
-        <cstring>dataEdit</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
-       <item>
-        <widget class="QLineEdit" name="dataEdit">
-         <property name="toolTip">
-          <string>Enter JSON string that will be associated with the name</string>
-         </property>
-         <property name="maxLength">
-          <number>520</number>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="dataSize">
-         <property name="text">
-          <string>0 / 520</string>
-         </property>
-        </widget>
-     </item>
-     <!--
-       <item>
-        <widget class="QPushButton" name="btnDNSEditor">
-         <property name="text">
-          <string>DNS Editor&#8230;</string>
-         </property>
-        </widget>
-       </item>
-     -->
-     </layout>
-     </item>
-     <item row="4" column="1">
-      <widget class="QLabel" name="label_4">
-       <property name="text">
-        <string>JSON string, e.g. {&amp;quot;ip&amp;quot;: [&amp;quot;1.2.3.4&amp;quot;, &amp;quot;1.2.3.5&amp;quot;]}&lt;br&gt;See &lt;a href=&quot;https://github.com/namecoin/proposals&quot;&gt;JSON value specifications&lt;/a&gt;.</string>
-       </property>
-       <property name="openExternalLinks">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QLabel" name="labelValidJSON">
-       <property name="text">
-        <string>TextLabel</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0">
       <widget class="QLabel" name="labelTransferTo">
        <property name="text">
         <string>&amp;Transfer to:</string>
@@ -118,7 +196,7 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="3" column="1">
       <layout class="QHBoxLayout" name="transferToLayout">
        <property name="spacing">
         <number>0</number>
@@ -169,10 +247,20 @@
        </item>
       </layout>
      </item>
-     <item row="7" column="1">
+     <item row="4" column="1">
       <widget class="QLabel" name="labelTransferToHint">
        <property name="text">
         <string>(Leave empty if not transferring.)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>&amp;Data:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
@@ -237,7 +325,6 @@
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>dataEdit</tabstop>
   <tabstop>transferTo</tabstop>
   <tabstop>addressBookButton</tabstop>
   <tabstop>pasteButton</tabstop>
