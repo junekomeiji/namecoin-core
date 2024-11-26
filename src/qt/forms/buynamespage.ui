@@ -65,11 +65,14 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>New domain name:</string>
+        <string>&amp;New domain name:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
        </property>
+        <property name="buddy">
+         <cstring>registerName</cstring>
+        </property>
       </widget>
       <widget class="QLabel" name="label_5">
        <property name="geometry">
@@ -142,11 +145,14 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>New ASCII name:</string>
+        <string>&amp;New ASCII name:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-       </property>
+        </property>
+        <property name="buddy">
+         <cstring>registerAsciiName</cstring>
+        </property>
       </widget>
       <widget class="QLabel" name="label">
        <property name="geometry">
@@ -219,11 +225,14 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>New hex name:</string>
+        <string>&amp;New hex name:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-       </property>
+        </property>
+        <property name="buddy">
+         <cstring>registerHexName</cstring>
+        </property>
       </widget>
       <widget class="QLabel" name="label_6">
        <property name="geometry">
@@ -244,12 +253,9 @@
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Hex names are only recommended for power users and developers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="textFormat">
-        <enum>Qt::RichText</enum>
+        <enum>Qt::PlainText</enum>
        </property>
        <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-       <property name="openExternalLinks">
         <bool>true</bool>
        </property>
       </widget>
@@ -298,24 +304,6 @@
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="checkNameButton">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>150</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>&amp;Check name availability…</string>
-     </property>
-    </widget>
-   </item>
    <item>
     <widget class="QLabel" name="statusLabel">
      <property name="sizePolicy">
@@ -350,7 +338,7 @@
       </size>
      </property>
      <property name="toolTip">
-      <string>Register the name.</string>
+      <string>Register the name.  You must have already pre-registered it.</string>
      </property>
      <property name="text">
       <string>&amp;Register Name…</string>
@@ -394,6 +382,5 @@
  <resources>
   <include location="../bitcoin.qrc"/>
  </resources>
- <resources/>
  <connections/>
 </ui>
