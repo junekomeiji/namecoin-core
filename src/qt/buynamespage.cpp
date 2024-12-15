@@ -89,6 +89,7 @@ void BuyNamesPage::onHexNameEdited(const QString &name)
 
     QString availableError;
     //check if it's even a valid hexdomain
+    QString ascii = NameTableModel::asciiToHex(name);
     std::string hex = name.toStdString();
     if(!std::all_of(hex.begin(), hex.end(), ::isxdigit))
     {
@@ -96,8 +97,7 @@ void BuyNamesPage::onHexNameEdited(const QString &name)
     } 
     else 
     {
-        std::string domain = ConvertDomainForms("0x" + hex);
-        availableError = name_available(QString::fromStdString(domain));
+        availableError = name_available(ascii);
     }
     
     if (availableError == "")
@@ -118,20 +118,16 @@ void BuyNamesPage::onDomainNameEdited(const QString &name){
         return;
 
     QString availableError;
-    std::string domain = name.toStdString();
     //check if it even ends with .bit
-    if(!name.toStdString().ends_with(".bit"))
+    if(!name.endsWith(".bit"))
     {
         ui->statusLabel->setText(tr("%1 does not end with .bit!").arg(name));
     } else {
-        domain = ConvertDomainForms(domain);
-        availableError = name_available(QString::fromStdString(domain));
+        QString domain = name.left(name.size()-4);
+        availableError = name_available(name);
     }
-
     if (availableError == "")
     {
-
-        const std::string domain = ConvertDomainForms(name.toStdString());
         ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
         ui->registerNameButton->show();
     }
@@ -159,13 +155,12 @@ void BuyNamesPage::onRegisterNameAction()
             {
                 //strip off .bit
                 input = ui->registerNameDomain->text();
-                std::string domain = input.toStdString();
-                if(!domain.ends_with(".bit")){
+                if(input.endsWith(".bit")){
                     ErrorBox = QMessageBox::critical(this, tr("Invalid Namecoin Domain"),
                                 tr("The inputted domain does not end with .bit."), QMessageBox::Cancel);
                     return;
                 } else {
-                    name = QString::fromStdString(ConvertDomainForms(domain));
+                    name = input;
                 }
             }
 
@@ -190,8 +185,7 @@ void BuyNamesPage::onRegisterNameAction()
      
                     return;
                 } else {
-                    std::string domain = ConvertDomainForms("0x" + input.toStdString());
-                    name = QString::fromStdString(domain);
+                    name = NameTableModel::asciiToHex(input);
                 }
             }
 
