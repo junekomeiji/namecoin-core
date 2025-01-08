@@ -38,6 +38,8 @@ BuyNamesPage::BuyNamesPage(const PlatformStyle *platformStyle, QWidget *parent) 
     connect(ui->registerNameButton, &QPushButton::clicked, this, &BuyNamesPage::onRegisterNameAction);
 
     ui->registerNameDomain->installEventFilter(this);
+    ui->registerNameAscii->installEventFilter(this);
+    ui->registerNameHex->installEventFilter(this);
 }
 
 BuyNamesPage::~BuyNamesPage()
@@ -58,6 +60,17 @@ bool BuyNamesPage::eventFilter(QObject *object, QEvent *event)
         {
             ui->registerNameButton->setDefault(true);
         }
+
+        if (object == ui->registerNameHex)
+        {
+            ui->registerNameButton->setDefault(true);
+        }
+
+        if (object == ui->registerNameDomain)
+        {
+            ui->registerNameButton->setDefault(true);
+        }
+
     }
     return QWidget::eventFilter(object, event);
 }
@@ -90,15 +103,12 @@ void BuyNamesPage::onHexNameEdited(const QString &name)
     QString availableError;
     //check if it's even a valid hexdomain
     QString ascii = NameTableModel::asciiToHex(name);
-    std::string hex = name.toStdString();
-    if(!std::all_of(hex.begin(), hex.end(), ::isxdigit))
+    if(!std::all_of(name.toStdString.begin(), name.toStdString.end(), ::isxdigit))
     {
         ui->statusLabel->setText(tr("%1 is not a valid hexadecimal entry!").arg(name));
     } 
-    else 
-    {
-        availableError = name_available(ascii);
-    }
+     
+    availableError = name_available(ascii);
     
     if (availableError == "")
     {
