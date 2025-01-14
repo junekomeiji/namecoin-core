@@ -80,18 +80,30 @@ void BuyNamesPage::onAsciiNameEdited(const QString &name)
     if (!walletModel)
         return;
 
-    QString availableError = name_available(name);
-
-    if (availableError == "")
+    if(!name.startsWith("d/"))
     {
-        ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
-        ui->registerNameButton->show();
+         ui->statusLabel->setText(tr("%1 does not begin with /d!").arg(name));   
     }
     else
     {
-        ui->statusLabel->setText(availableError);
-        ui->registerNameButton->hide();
+        QString domain = name.right(name.size()-2);
+        QString availableError = name_available(domain);
+        ui->registerNameHex->setText("642f" + NameTableModel::asciiToHex(domain));
+        ui->registerNameDomain->setText(domain + ".bit");
+
+        if (availableError.isEmpty())
+        {
+            ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
+            ui->registerNameButton->show();
+        }
+        else
+        {
+            ui->statusLabel->setText(availableError);
+            ui->registerNameButton->hide();
+        }
+
     }
+    
 }
 
 void BuyNamesPage::onHexNameEdited(const QString &name)
@@ -100,26 +112,30 @@ void BuyNamesPage::onHexNameEdited(const QString &name)
     if (!walletModel)
         return;
 
-    QString availableError;
     //check if it's even a valid hexdomain
     QString ascii = NameTableModel::asciiToHex(name);
-    if(!std::all_of(name.toStdString.begin(), name.toStdString.end(), ::isxdigit))
+    if(!std::all_of(name.toStdString().begin(), name.toStdString().end(), ::isxdigit))
     {
         ui->statusLabel->setText(tr("%1 is not a valid hexadecimal entry!").arg(name));
     } 
-     
-    availableError = name_available(ascii);
+    else 
+    {
+        QString availableError = name_available(ascii);
+        ui->registerNameAscii->setText("d/" + NameTableModel::hexToAscii(name));
+        ui->registerNameDomain->setText(NameTableModel::hexToAscii(name) + ".bit");
     
-    if (availableError == "")
-    {
-        ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
-        ui->registerNameButton->show();
+        if (availableError.isEmpty())
+        {
+            ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
+            ui->registerNameButton->show();
+        }
+        else
+        {
+            ui->statusLabel->setText(availableError);
+            ui->registerNameButton->hide();
+        }
     }
-    else
-    {
-        ui->statusLabel->setText(availableError);
-        ui->registerNameButton->hide();
-    }
+
 }
 
 void BuyNamesPage::onDomainNameEdited(const QString &name){
@@ -127,24 +143,28 @@ void BuyNamesPage::onDomainNameEdited(const QString &name){
     if (!walletModel)
         return;
 
-    QString availableError;
     //check if it even ends with .bit
     if(!name.endsWith(".bit"))
     {
         ui->statusLabel->setText(tr("%1 does not end with .bit!").arg(name));
-    } else {
+    } 
+    else 
+    {
         QString domain = name.left(name.size()-4);
-        availableError = name_available(name);
-    }
-    if (availableError == "")
-    {
-        ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
-        ui->registerNameButton->show();
-    }
-    else
-    {
-        ui->statusLabel->setText(availableError);
-        ui->registerNameButton->hide();
+        QString availableError = name_available(domain);
+        ui->registerNameAscii->setText("d/" + domain);
+        ui->registerNameHex->setText("642f" + NameTableModel::asciiToHex(domain));
+    
+        if (availableError.isEmpty())
+        {
+            ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
+            ui->registerNameButton->show();
+        }
+        else
+        {
+            ui->statusLabel->setText(availableError);
+            ui->registerNameButton->hide();
+        }
     }
 }
 
@@ -153,59 +173,10 @@ void BuyNamesPage::onRegisterNameAction()
     if (!walletModel)
         return;
 
-    //check which tab we're on
-    int currentTab = ui->tabWidget->currentIndex();
-
     QString input, name;
-    QMessageBox::StandardButton ErrorBox;
-
-    //just do the conversion here...
-    switch(currentTab) {
-        case 0:
-            {
-                //strip off .bit
-                input = ui->registerNameDomain->text();
-                if(input.endsWith(".bit")){
-                    ErrorBox = QMessageBox::critical(this, tr("Invalid Namecoin Domain"),
-                                tr("The inputted domain does not end with .bit."), QMessageBox::Cancel);
-                    return;
-                } else {
-                    name = input;
-                }
-            }
-
-            break;
-
-        case 1:
-            {
-                //no changes needed
-                input = ui->registerNameAscii->text();
-                name = input;
-                break;
-            }
-        case 2:
-            {
-                //check if valid hex
-                input = ui->registerNameHex->text();
-                std::string hex = input.toStdString();
-
-                if(!std::all_of(hex.begin(), hex.end(), ::isxdigit)){
-                    ErrorBox = QMessageBox::critical(this, tr("Invalid Hex Value"),
-                                tr("The inputted hex value is invalid."), QMessageBox::Cancel);
-     
-                    return;
-                } else {
-                    name = NameTableModel::asciiToHex(input);
-                }
-            }
-
-            break;
-
-        default:
-            //how did we get here?
-            break;
-    }
-
+    
+    name = ui->registerNameAscii->text();
+    
     WalletModel::UnlockContext ctx(walletModel->requestUnlock());
     if (!ctx.isValid())
         return;
@@ -226,11 +197,6 @@ void BuyNamesPage::onRegisterNameAction()
         return;
     }
 
-    // reset UI text
-    ui->registerNameDomain->setText("");
-    ui->registerNameAscii->setText("d/");
-    ui->registerNameHex->setText("642f");
-    ui->registerNameButton->setDefault(true);
 }
 
 // Returns empty string if available, otherwise a description of why it is not

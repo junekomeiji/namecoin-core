@@ -250,7 +250,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Hex names are only recommended for power users and developers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>Hex names are only recommended for power users and developers.</string>
        </property>
        <property name="textFormat">
         <enum>Qt::PlainText</enum>
