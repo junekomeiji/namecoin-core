@@ -217,3 +217,15 @@ GetMinimalJSON (const std::string& text){
 
     return v.write(0,0);
 }
+
+//remind me to write test cases for them
+
+bool
+IsEndingWithBit (const std::string& domain){
+    return domain.ends_with(".bit");
+}
+
+std::string
+ASCIIFromDomain(const std::string& domain){
+    return "d/" + domain.substr(0, domain.size()-4);
+}
