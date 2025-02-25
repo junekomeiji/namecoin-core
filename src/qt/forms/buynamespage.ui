@@ -65,7 +65,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>&amp;New domain name:</string>
+        <string>New domain name:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -145,7 +145,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>&amp;New ASCII name:</string>
+        <string>New ASCII name:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -225,7 +225,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>&amp;New hex name:</string>
+        <string>New hex name:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -340,7 +340,7 @@
       <string>Register the name.  You must have already pre-registered it.</string>
      </property>
      <property name="text">
-      <string>&amp;Register Name…</string>
+      <string>Register Name…</string>
      </property>
      <property name="icon">
       <iconset>
