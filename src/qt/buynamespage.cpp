@@ -80,25 +80,13 @@ bool BuyNamesPage::eventFilter(QObject *object, QEvent *event)
     return QWidget::eventFilter(object, event);
 }
 
-/*I think the complexity of this would be reduced a lot if you had 4 helper 
- * functions here:
-
-    Fill in ASCII textbox based on Domain textbox
-    Vice versa
-    Fill in ASCII textbox based on Hex textbox
-    Vice versa
-*/
-
-// I accomplish this with four private functions.
-// each of them outputting a QString
-// ready for use by the on*NameEdited functions, as is.
 
 QString BuyNamesPage::DomainToASCII(const QString &name){
     //There does not exist the function to strip off the .bit off, so I wrote
     //one in applications.cpp
     //since we know the Namespace of Domain, this should be easy
     
-    if(IsEndingWithBit(name.toStdString()))
+    if(IsPurportedNamecoinDomain(name.toStdString()))
     {
         return QString::fromStdString(ASCIIFromDomain(name.toStdString()));
     }
@@ -118,13 +106,7 @@ QString BuyNamesPage::ASCIIToDomain(const QString &name){
 
 
 QString BuyNamesPage::HexToASCII(const QString &name){
-
-    try
-    {
-        DecodeName(name.toStdString(), NameEncoding::HEX);
-    } 
-    catch (InvalidNameString e) { return QString(""); }
-
+    return NameTableModel::hexToAscii(name);
 }
 
 
@@ -161,7 +143,7 @@ void BuyNamesPage::onHexNameEdited(const QString &name)
         return;
 
     try{
-        DecodeName(name.toStdString(), NameEncoding::HEX);
+        NameTableModel::hexToAscii(name);
         QString availableError = name_available(HexToASCII(name));
         ui->registerNameAscii->setText(HexToASCII(name));
         ui->registerNameDomain->setText(ASCIIToDomain(HexToASCII(name)));
@@ -236,6 +218,10 @@ void BuyNamesPage::onRegisterNameAction()
         return;
     }
 
+    ui->registerNameDomain->setText("d/");
+    ui->registerNameAscii->setText("");
+    ui->registerNameHex->setText("642f");
+    ui->registerNameButton->setDefault(true);
 }
 
 // Returns empty string if available, otherwise a description of why it is not

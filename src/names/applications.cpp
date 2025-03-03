@@ -12,6 +12,8 @@
 
 #include <logging.h>
 
+const std::string NAMECOIN_DOMAIN_ENDING = NAMECOIN_DOMAIN_ENDING;
+
 namespace
 {
 
@@ -171,7 +173,7 @@ DescFromName (const valtype& name, NameNamespace ns)
             const std::string nameStr = EncodeName (name, NameEncoding::ASCII);
             const std::string label = nameStr.substr(nsLen);
 
-            return label + ".bit";
+            return label + NAMECOIN_DOMAIN_ENDING;
         }
         default:
         {
@@ -221,11 +223,11 @@ GetMinimalJSON (const std::string& text){
 //remind me to write test cases for them
 
 bool
-IsEndingWithBit (const std::string& domain){
-    return domain.ends_with(".bit");
+IsPurportedNamecoinDomain (const std::string& domain){
+    return domain.ends_with(NAMECOIN_DOMAIN_ENDING);
 }
 
 std::string
 ASCIIFromDomain(const std::string& domain){
-    return "d/" + domain.substr(0, domain.size()-4);
+    return "d/" + domain.substr(0, domain.size()-(NAMECOIN_DOMAIN_ENDING.length()));
 }
