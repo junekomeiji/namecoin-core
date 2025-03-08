@@ -12,7 +12,7 @@
 
 #include <logging.h>
 
-const std::string NAMECOIN_DOMAIN_ENDING = NAMECOIN_DOMAIN_ENDING;
+const std::string NAMECOIN_DOMAIN_ENDING = ".bit";
 
 namespace
 {

@@ -119,8 +119,11 @@ void BuyNamesPage::onAsciiNameEdited(const QString &name)
     if (!walletModel)
         return;
 
-    ui->registerNameHex->setText(ASCIIToHex(name));
-    ui->registerNameDomain->setText(ASCIIToDomain(name));
+    const QString hexName = ASCIIToHex(name);
+    const QString domainName = ASCIIToDomain(name);
+
+    ui->registerNameHex->setText(hexName);
+    ui->registerNameDomain->setText(domainName);
 
     QString availableError = name_available(name);
     if (availableError.isEmpty())
@@ -142,11 +145,14 @@ void BuyNamesPage::onHexNameEdited(const QString &name)
     if (!walletModel)
         return;
 
+    const QString asciiName = HexToASCII(name);
+    const QString domainName = ASCIIToDomain(HexToASCII(name));
+
     try{
         NameTableModel::hexToAscii(name);
-        QString availableError = name_available(HexToASCII(name));
-        ui->registerNameAscii->setText(HexToASCII(name));
-        ui->registerNameDomain->setText(ASCIIToDomain(HexToASCII(name)));
+        QString availableError = name_available(asciiName);
+        ui->registerNameAscii->setText(asciiName);
+        ui->registerNameDomain->setText(domainName);
     
         if (availableError.isEmpty())
         {
@@ -171,19 +177,30 @@ void BuyNamesPage::onDomainNameEdited(const QString &name){
     if (!walletModel)
         return;
 
-    ui->registerNameAscii->setText(DomainToASCII(name));
-    ui->registerNameHex->setText(DomainToASCII(ASCIIToHex(name)));
+    const QString hexName = DomainToASCII(ASCIIToHex(name));
+    const QString asciiName = DomainToASCII(name);
 
-    QString availableError = name_available(DomainToASCII(name));
-
-    if (availableError.isEmpty())
+    ui->registerNameAscii->setText(asciiName);
+    ui->registerNameHex->setText(hexName);
+    
+    if(IsPurportedNamecoinDomain(name.toStdString()))
     {
-        ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
-        ui->registerNameButton->show();
+        QString availableError = name_available(DomainToASCII(name));
+    
+        if (availableError.isEmpty())
+        {
+            ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
+            ui->registerNameButton->show();
+        }
+        else
+        {
+            ui->statusLabel->setText(availableError);
+            ui->registerNameButton->hide();
+        }
     }
     else
     {
-        ui->statusLabel->setText(availableError);
+        ui->statusLabel->setText(tr("%1 is not a valid Namecoin domain!").arg(name));
         ui->registerNameButton->hide();
     }
 
