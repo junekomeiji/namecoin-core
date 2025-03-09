@@ -146,7 +146,7 @@ void BuyNamesPage::onHexNameEdited(const QString &name)
         return;
 
     const QString asciiName = HexToASCII(name);
-    const QString domainName = ASCIIToDomain(HexToASCII(name));
+    const QString domainName = ASCIIToDomain(asciiName);
 
     try{
         NameTableModel::hexToAscii(name);
@@ -177,8 +177,8 @@ void BuyNamesPage::onDomainNameEdited(const QString &name){
     if (!walletModel)
         return;
 
-    const QString hexName = DomainToASCII(ASCIIToHex(name));
     const QString asciiName = DomainToASCII(name);
+    const QString hexName = DomainToASCII(asciiName);
 
     ui->registerNameAscii->setText(asciiName);
     ui->registerNameHex->setText(hexName);
