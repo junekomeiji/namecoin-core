@@ -145,11 +145,13 @@ void BuyNamesPage::onHexNameEdited(const QString &name)
     if (!walletModel)
         return;
 
-    const QString asciiName = HexToASCII(name);
-    const QString domainName = ASCIIToDomain(asciiName);
 
     try{
         NameTableModel::hexToAscii(name);
+    
+        const QString asciiName = HexToASCII(name);
+        const QString domainName = ASCIIToDomain(asciiName);
+        
         QString availableError = name_available(asciiName);
         ui->registerNameAscii->setText(asciiName);
         ui->registerNameDomain->setText(domainName);
@@ -167,7 +169,7 @@ void BuyNamesPage::onHexNameEdited(const QString &name)
     }
     catch(InvalidNameString e)
     {
-        ui->statusLabel->setText(tr("%1 is not a valid hexadecimal entry!").arg(name));
+        ui->statusLabel->setText(tr("Not a valid hexadecimal entry!"));
     }
 
 }
