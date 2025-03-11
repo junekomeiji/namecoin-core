@@ -19,14 +19,6 @@
 
 #include <QMessageBox>
 
-//ascii -> prexisting domain system
-//domain -> domain from scratch (without .bit)
-//hex -> hex
-//
-// 25/02/2025
-// ascii -> hex and ascii -> domain works
-// hex still breaks (atp i suspect it's non printing characters)
-// domain -> hex doesn't work...
 BuyNamesPage::BuyNamesPage(const PlatformStyle *platformStyle, QWidget *parent) :
     QWidget(parent),
     platformStyle(platformStyle),
@@ -95,8 +87,6 @@ QString BuyNamesPage::DomainToASCII(const QString &name){
 
 
 QString BuyNamesPage::ASCIIToDomain(const QString &name){
-    //use DescFromName
-    
     if(NamespaceFromName(name.toStdString()) == NameNamespace::Domain)
     {
         return QString::fromStdString(DescFromName(DecodeName(name.toStdString(), NameEncoding::ASCII), NameNamespace::Domain));
@@ -119,22 +109,29 @@ void BuyNamesPage::onAsciiNameEdited(const QString &name)
     if (!walletModel)
         return;
 
-    const QString hexName = ASCIIToHex(name);
-    const QString domainName = ASCIIToDomain(name);
-
-    ui->registerNameHex->setText(hexName);
-    ui->registerNameDomain->setText(domainName);
-
-    QString availableError = name_available(name);
-    if (availableError.isEmpty())
+    try
     {
-        ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
-        ui->registerNameButton->show();
+        const QString hexName = ASCIIToHex(name);
+        const QString domainName = ASCIIToDomain(name);
+
+        ui->registerNameHex->setText(hexName);
+        ui->registerNameDomain->setText(domainName);
+
+        QString availableError = name_available(name);
+        if (availableError.isEmpty())
+        {
+            ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
+            ui->registerNameButton->show();
+        }
+        else
+        {
+            ui->statusLabel->setText(availableError);
+            ui->registerNameButton->hide();
+        }
     }
-    else
+    catch(InvalidNameString e)
     {
-        ui->statusLabel->setText(availableError);
-        ui->registerNameButton->hide();
+        ui->statusLabel->setText(tr("Not a valid ASCII entry!"));
     }
 
 }
@@ -147,8 +144,6 @@ void BuyNamesPage::onHexNameEdited(const QString &name)
 
 
     try{
-        NameTableModel::hexToAscii(name);
-    
         const QString asciiName = HexToASCII(name);
         const QString domainName = ASCIIToDomain(asciiName);
         
@@ -179,32 +174,40 @@ void BuyNamesPage::onDomainNameEdited(const QString &name){
     if (!walletModel)
         return;
 
-    const QString asciiName = DomainToASCII(name);
-    const QString hexName = DomainToASCII(asciiName);
-
-    ui->registerNameAscii->setText(asciiName);
-    ui->registerNameHex->setText(hexName);
-    
-    if(IsPurportedNamecoinDomain(name.toStdString()))
+    try
     {
-        QString availableError = name_available(DomainToASCII(name));
-    
-        if (availableError.isEmpty())
+        const QString asciiName = DomainToASCII(name);
+        const QString hexName = DomainToASCII(asciiName);
+
+        ui->registerNameAscii->setText(asciiName);
+        ui->registerNameHex->setText(hexName);
+        
+        if(IsPurportedNamecoinDomain(name.toStdString()))
         {
-            ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
-            ui->registerNameButton->show();
+            QString availableError = name_available(DomainToASCII(name));
+        
+            if (availableError.isEmpty())
+            {
+                ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
+                ui->registerNameButton->show();
+            }
+            else
+            {
+                ui->statusLabel->setText(availableError);
+                ui->registerNameButton->hide();
+            }
         }
         else
         {
-            ui->statusLabel->setText(availableError);
+            ui->statusLabel->setText(tr("%1 is not a valid Namecoin domain!").arg(name));
             ui->registerNameButton->hide();
         }
     }
-    else
+    catch(InvalidNameString e)
     {
-        ui->statusLabel->setText(tr("%1 is not a valid Namecoin domain!").arg(name));
-        ui->registerNameButton->hide();
+        ui->statusLabel->setText(tr("Not a valid hexadecimal entry!"));
     }
+
 
 }
 
