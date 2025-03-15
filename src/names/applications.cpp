@@ -12,7 +12,7 @@
 
 #include <logging.h>
 
-const std::string NAMECOIN_DOMAIN_ENDING = ".bit";
+const std::string NAMECOIN_DOMAIN_SUFFIX = ".bit";
 
 namespace
 {
@@ -173,7 +173,7 @@ DescFromName (const valtype& name, NameNamespace ns)
             const std::string nameStr = EncodeName (name, NameEncoding::ASCII);
             const std::string label = nameStr.substr(nsLen);
 
-            return label + NAMECOIN_DOMAIN_ENDING;
+            return label + NAMECOIN_DOMAIN_SUFFIX;
         }
         default:
         {
@@ -224,10 +224,10 @@ GetMinimalJSON (const std::string& text){
 
 bool
 IsPurportedNamecoinDomain (const std::string& domain){
-    return domain.ends_with(NAMECOIN_DOMAIN_ENDING);
+    return domain.ends_with(NAMECOIN_DOMAIN_SUFFIX);
 }
 
 std::string
 ASCIIFromDomain(const std::string& domain){
-    return "d/" + domain.substr(0, domain.size()-(NAMECOIN_DOMAIN_ENDING.length()));
+    return "d/" + domain.substr(0, domain.size()-(NAMECOIN_DOMAIN_SUFFIX.length()));
 }

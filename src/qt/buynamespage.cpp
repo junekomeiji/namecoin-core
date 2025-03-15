@@ -28,7 +28,7 @@ BuyNamesPage::BuyNamesPage(const PlatformStyle *platformStyle, QWidget *parent) 
     ui->setupUi(this);
 
     ui->registerNameButton->hide();
-    
+
     connect(ui->registerNameDomain, &QLineEdit::textEdited, this, &BuyNamesPage::onDomainNameEdited);
     connect(ui->registerNameAscii, &QLineEdit::textEdited, this, &BuyNamesPage::onAsciiNameEdited);
     connect(ui->registerNameHex, &QLineEdit::textEdited, this, &BuyNamesPage::onHexNameEdited);
@@ -104,6 +104,20 @@ QString BuyNamesPage::ASCIIToHex(const QString &name){
     return NameTableModel::asciiToHex(name);
 }
 
+void BuyNamesPage::availableError(const QString &name){
+    QString availableError = name_available(name);
+    if (availableError.isEmpty())
+    {
+        ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
+        ui->registerNameButton->show();
+    }
+    else
+    {
+        ui->statusLabel->setText(availableError);
+        ui->registerNameButton->hide();
+    }
+}
+
 void BuyNamesPage::onAsciiNameEdited(const QString &name)
 {
     if (!walletModel)
@@ -117,19 +131,9 @@ void BuyNamesPage::onAsciiNameEdited(const QString &name)
         ui->registerNameHex->setText(hexName);
         ui->registerNameDomain->setText(domainName);
 
-        QString availableError = name_available(name);
-        if (availableError.isEmpty())
-        {
-            ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
-            ui->registerNameButton->show();
-        }
-        else
-        {
-            ui->statusLabel->setText(availableError);
-            ui->registerNameButton->hide();
-        }
+        availableError(name);
     }
-    catch(InvalidNameString e)
+    catch(InvalidNameString &e)
     {
         ui->statusLabel->setText(tr("Not a valid ASCII entry!"));
     }
@@ -147,24 +151,14 @@ void BuyNamesPage::onHexNameEdited(const QString &name)
         const QString asciiName = HexToASCII(name);
         const QString domainName = ASCIIToDomain(asciiName);
         
-        QString availableError = name_available(asciiName);
         ui->registerNameAscii->setText(asciiName);
         ui->registerNameDomain->setText(domainName);
     
-        if (availableError.isEmpty())
-        {
-            ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
-            ui->registerNameButton->show();
-        }
-        else
-        {
-            ui->statusLabel->setText(availableError);
-            ui->registerNameButton->hide();
-        }
+        availableError(asciiName);
     }
-    catch(InvalidNameString e)
+    catch(InvalidNameString &e)
     {
-        ui->statusLabel->setText(tr("Not a valid hexadecimal entry!"));
+        ui->statusLabel->setText(tr("Not a valid entry!"));
     }
 
 }
@@ -177,25 +171,14 @@ void BuyNamesPage::onDomainNameEdited(const QString &name){
     try
     {
         const QString asciiName = DomainToASCII(name);
-        const QString hexName = DomainToASCII(asciiName);
+        const QString hexName = ASCIIToHex((asciiName));
 
         ui->registerNameAscii->setText(asciiName);
         ui->registerNameHex->setText(hexName);
         
         if(IsPurportedNamecoinDomain(name.toStdString()))
         {
-            QString availableError = name_available(DomainToASCII(name));
-        
-            if (availableError.isEmpty())
-            {
-                ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
-                ui->registerNameButton->show();
-            }
-            else
-            {
-                ui->statusLabel->setText(availableError);
-                ui->registerNameButton->hide();
-            }
+            availableError(asciiName);
         }
         else
         {
@@ -203,9 +186,9 @@ void BuyNamesPage::onDomainNameEdited(const QString &name){
             ui->registerNameButton->hide();
         }
     }
-    catch(InvalidNameString e)
+    catch(InvalidNameString &e)
     {
-        ui->statusLabel->setText(tr("Not a valid hexadecimal entry!"));
+        ui->statusLabel->setText(tr("Not a valid entry!"));
     }
 
 
@@ -240,9 +223,9 @@ void BuyNamesPage::onRegisterNameAction()
         return;
     }
 
-    ui->registerNameDomain->setText("d/");
-    ui->registerNameAscii->setText("");
-    ui->registerNameHex->setText("642f");
+    ui->registerNameDomain->setText("");
+    ui->registerNameAscii->setText("d/");
+    ui->registerNameHex->setText(HexToASCII(QString("d/")));
     ui->registerNameButton->setDefault(true);
 }
 
