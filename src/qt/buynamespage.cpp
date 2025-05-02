@@ -74,9 +74,6 @@ bool BuyNamesPage::eventFilter(QObject *object, QEvent *event)
 
 
 QString BuyNamesPage::DomainToASCII(const QString &name){
-    //There does not exist the function to strip off the .bit off, so I wrote
-    //one in applications.cpp
-    //since we know the Namespace of Domain, this should be easy
     
     if(IsPurportedNamecoinDomain(name.toStdString()))
     {
@@ -104,8 +101,12 @@ QString BuyNamesPage::ASCIIToHex(const QString &name){
     return NameTableModel::asciiToHex(name);
 }
 
-void BuyNamesPage::availableError(const QString &name){
+void BuyNamesPage::availableError()
+{
+    
+    QString name = ui->registerNameAscii->text();
     QString availableError = name_available(name);
+    
     if (availableError.isEmpty())
     {
         ui->statusLabel->setText(tr("%1 is available to register!").arg(name));
@@ -131,7 +132,7 @@ void BuyNamesPage::onAsciiNameEdited(const QString &name)
         ui->registerNameHex->setText(hexName);
         ui->registerNameDomain->setText(domainName);
 
-        availableError(name);
+        availableError();
     }
     catch(InvalidNameString &e)
     {
@@ -154,7 +155,7 @@ void BuyNamesPage::onHexNameEdited(const QString &name)
         ui->registerNameAscii->setText(asciiName);
         ui->registerNameDomain->setText(domainName);
     
-        availableError(asciiName);
+        availableError();
     }
     catch(InvalidNameString &e)
     {
@@ -178,7 +179,7 @@ void BuyNamesPage::onDomainNameEdited(const QString &name){
         
         if(IsPurportedNamecoinDomain(name.toStdString()))
         {
-            availableError(asciiName);
+            availableError();
         }
         else
         {
