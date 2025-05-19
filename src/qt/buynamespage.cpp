@@ -172,7 +172,7 @@ void BuyNamesPage::onDomainNameEdited(const QString &name){
     try
     {
         const QString asciiName = DomainToASCII(name);
-        const QString hexName = ASCIIToHex((asciiName));
+        const QString hexName = ASCIIToHex(asciiName);
 
         ui->registerNameAscii->setText(asciiName);
         ui->registerNameHex->setText(hexName);

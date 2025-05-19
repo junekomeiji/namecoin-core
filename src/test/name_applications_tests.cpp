@@ -147,6 +147,8 @@ BOOST_AUTO_TEST_CASE( domain_detection )
 
     BOOST_CHECK_EQUAL(IsPurportedNamecoinDomain("test"), false);
 
+    BOOST_CHECK_EQUAL(IsPurportedNamecoinDomain("test.com"), false);
+
     const std::string testName = ASCIIFromDomain("test.bit");
     BOOST_CHECK(testName == "d/test");
 }
