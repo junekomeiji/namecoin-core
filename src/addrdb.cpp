@@ -12,6 +12,7 @@
 #include <clientversion.h>
 #include <common/args.h>
 #include <common/settings.h>
+#include <cstdint>
 #include <hash.h>
 #include <logging/timer.h>
 #include <netbase.h>
@@ -25,8 +26,6 @@
 #include <util/log.h>
 #include <util/syserror.h>
 #include <util/translation.h>
-
-#include <cstdint>
 
 namespace {
 
@@ -60,7 +59,7 @@ bool SerializeFileDB(const std::string& prefix, const fs::path& path, const Data
 
     // open temp output file
     fs::path pathTmp = gArgs.GetDataDirNet() / fs::u8path(tmpfn);
-    FILE* file = fsbridge::fopen(pathTmp, "wb");
+    FILE *file = fsbridge::fopen(pathTmp, "wb");
     AutoFile fileout{file};
     if (fileout.IsNull()) {
         remove(pathTmp);

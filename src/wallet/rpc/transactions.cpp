@@ -788,10 +788,10 @@ RPCMethod listsinceblock()
 
     UniValue transactions(UniValue::VARR);
 
-    for (const auto& [_, txid] : wallet.mapWallet) {
+    for (const auto& [_, tx] : wallet.mapWallet) {
 
-        if (depth == -1 || abs(wallet.GetTxDepthInMainChain(txid)) < depth) {
-            ListTransactions(wallet, txid, 0, true, transactions, filter_label, include_change);
+        if (depth == -1 || abs(wallet.GetTxDepthInMainChain(tx)) < depth) {
+            ListTransactions(wallet, tx, 0, true, transactions, filter_label, include_change);
         }
     }
 
@@ -803,8 +803,8 @@ RPCMethod listsinceblock()
         if (!wallet.chain().findBlock(blockId, FoundBlock().data(block)) || block.IsNull()) {
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Can't read block from disk");
         }
-        for (const CTransactionRef& txid : block.vtx) {
-            auto it = wallet.mapWallet.find(txid->GetHash());
+        for (const CTransactionRef& tx : block.vtx) {
+            auto it = wallet.mapWallet.find(tx->GetHash());
             if (it != wallet.mapWallet.end()) {
                 // We want all transactions regardless of confirmation count to appear here,
                 // even negative confirmation ones, hence the big negative.

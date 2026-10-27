@@ -235,7 +235,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
     return SendCoinsReturn(OK);
 }
 
-void WalletModel::send_coins(WalletModelTransaction& transaction)
+void WalletModel::sendCoins(WalletModelTransaction& transaction)
 {
     QByteArray transaction_array; /* store serialized transaction */
 

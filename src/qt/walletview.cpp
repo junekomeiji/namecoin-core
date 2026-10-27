@@ -62,8 +62,8 @@ WalletView::WalletView(WalletModel* wallet_model, const PlatformStyle* _platform
     receiveCoinsPage = new ReceiveCoinsDialog(platformStyle);
     receiveCoinsPage->setModel(walletModel);
 
-    send_coinsPage = new SendCoinsDialog(platformStyle);
-    send_coinsPage->setModel(walletModel);
+    sendCoinsPage = new SendCoinsDialog(platformStyle);
+    sendCoinsPage->setModel(walletModel);
 
     buyNamesPage = new BuyNamesPage(platformStyle);
     buyNamesPage->setModel(walletModel);
@@ -79,7 +79,7 @@ WalletView::WalletView(WalletModel* wallet_model, const PlatformStyle* _platform
     addWidget(overviewPage);
     addWidget(transactionsPage);
     addWidget(receiveCoinsPage);
-    addWidget(send_coinsPage);
+    addWidget(sendCoinsPage);
     addWidget(buyNamesPage);
     addWidget(manageNamesPage);
 
@@ -89,15 +89,15 @@ WalletView::WalletView(WalletModel* wallet_model, const PlatformStyle* _platform
 
     connect(overviewPage, &OverviewPage::outOfSyncWarningClicked, this, &WalletView::outOfSyncWarningClicked);
 
-    connect(send_coinsPage, &SendCoinsDialog::coinsSent, this, &WalletView::coinsSent);
+    connect(sendCoinsPage, &SendCoinsDialog::coinsSent, this, &WalletView::coinsSent);
     // Highlight transaction after send
-    connect(send_coinsPage, &SendCoinsDialog::coinsSent, transactionView, qOverload<const Txid&>(&TransactionView::focusTransaction));
+    connect(sendCoinsPage, &SendCoinsDialog::coinsSent, transactionView, qOverload<const Txid&>(&TransactionView::focusTransaction));
 
     // Clicking on "Export" allows to export the transaction list
     connect(exportButton, &QPushButton::clicked, transactionView, &TransactionView::exportClicked);
 
-    // Pass through messages from send_coinsPage
-    connect(send_coinsPage, &SendCoinsDialog::message, this, &WalletView::message);
+    // Pass through messages from sendCoinsPage
+    connect(sendCoinsPage, &SendCoinsDialog::message, this, &WalletView::message);
     // Pass through messages from transactionView
     connect(transactionView, &TransactionView::message, this, &WalletView::message);
     // Pass through messages from manageNamesPage
@@ -129,7 +129,7 @@ void WalletView::setClientModel(ClientModel *_clientModel)
     this->clientModel = _clientModel;
 
     overviewPage->setClientModel(_clientModel);
-    send_coinsPage->setClientModel(_clientModel);
+    sendCoinsPage->setClientModel(_clientModel);
     walletModel->setClientModel(_clientModel);
 }
 
@@ -171,10 +171,10 @@ void WalletView::gotoReceiveCoinsPage()
 
 void WalletView::gotoSendCoinsPage(QString addr)
 {
-    setCurrentWidget(send_coinsPage);
+    setCurrentWidget(sendCoinsPage);
 
     if (!addr.isEmpty())
-        send_coinsPage->setAddress(addr);
+        sendCoinsPage->setAddress(addr);
 }
 
 void WalletView::gotoBuyNamesPage()
@@ -213,7 +213,7 @@ void WalletView::gotoVerifyMessageTab(QString addr)
 
 bool WalletView::handlePaymentRequest(const SendCoinsRecipient& recipient)
 {
-    return send_coinsPage->handlePaymentRequest(recipient);
+    return sendCoinsPage->handlePaymentRequest(recipient);
 }
 
 void WalletView::showOutOfSyncWarning(bool fShow)

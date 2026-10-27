@@ -102,13 +102,13 @@ void DestinationAddressHelper::setOptions (const UniValue& opt)
 {
   RPCTypeCheckObj (opt,
     {
-      {"dest_address", UniValueType (UniValue::VSTR)},
+      {"destAddress", UniValueType (UniValue::VSTR)},
     },
     true, false);
-  if (!opt.exists ("dest_address"))
+  if (!opt.exists ("destAddress"))
     return;
 
-  CTxDestination dest = DecodeDestination (opt["dest_address"].get_str ());
+  CTxDestination dest = DecodeDestination (opt["destAddress"].get_str ());
   if (!IsValidDestination (dest))
     throw JSONRPCError (RPC_INVALID_ADDRESS_OR_KEY, "invalid address");
   overrideDest.reset (new CTxDestination (std::move (dest)));
@@ -137,8 +137,8 @@ void DestinationAddressHelper::finalise ()
 
 /**
  * Sends a name output to the given name script.  This is the "final" step that
- * is common between registername, namefirstupdate and updatename.  This method
- * also implements the "send_coins" option, if included.
+ * is common between name_new, name_firstupdate and name_update.  This method
+ * also implements the "sendCoins" option, if included.
  */
 UniValue
 SendNameOutput (const JSONRPCRequest& request,
@@ -148,7 +148,7 @@ SendNameOutput (const JSONRPCRequest& request,
 {
   RPCTypeCheckObj (opt,
     {
-      {"send_coins", UniValueType (UniValue::VOBJ)},
+      {"sendCoins", UniValueType (UniValue::VOBJ)},
     },
     true, false);
 
@@ -159,15 +159,15 @@ SendNameOutput (const JSONRPCRequest& request,
   std::vector<CRecipient> vecSend;
   vecSend.push_back ({dest, NAME_LOCKED_AMOUNT, false, nameOp});
 
-  if (opt.exists ("send_coins"))
-    for (const std::string& addr : opt["send_coins"].getKeys ())
+  if (opt.exists ("sendCoins"))
+    for (const std::string& addr : opt["sendCoins"].getKeys ())
       {
         const CTxDestination coinDest = DecodeDestination (addr);
         if (!IsValidDestination (coinDest))
           throw JSONRPCError (RPC_INVALID_ADDRESS_OR_KEY,
                               "Invalid address: " + addr);
 
-        const CAmount nAmount = AmountFromValue (opt["send_coins"][addr]);
+        const CAmount nAmount = AmountFromValue (opt["sendCoins"][addr]);
         if (nAmount <= 0)
           throw JSONRPCError (RPC_TYPE_ERROR, "Invalid amount for send");
 
@@ -182,14 +182,14 @@ SendNameOutput (const JSONRPCRequest& request,
 /* ************************************************************************** */
 
 RPCMethod
-namelist ()
+name_list ()
 {
   NameOptionsHelp optHelp;
   optHelp
       .withNameEncoding ()
       .withValueEncoding ();
 
-  return RPCMethod ("namelist",
+  return RPCMethod ("name_list",
       "Shows the status of all names in the wallet.\n",
       {
           {"name", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Only include this name"},
@@ -203,9 +203,9 @@ namelist ()
           }
       },
       RPCExamples {
-          HelpExampleCli ("namelist", "")
-        + HelpExampleCli ("namelist", "\"myname\"")
-        + HelpExampleRpc ("namelist", "")
+          HelpExampleCli ("name_list", "")
+        + HelpExampleCli ("name_list", "\"myname\"")
+        + HelpExampleRpc ("name_list", "")
       },
       [&] (const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
@@ -237,19 +237,19 @@ namelist ()
   const int tipHeight = chainman.ActiveHeight ();
   for (const auto& item : pwallet->mapWallet)
     {
-      const CWalletTx& txid = item.second;
-      if (!txid.GetTx ()->IsNamecoin ())
+      const CWalletTx& tx = item.second;
+      if (!tx.GetTx ()->IsNamecoin ())
         continue;
 
       CNameScript nameOp;
       int nOut = -1;
-      for (unsigned i = 0; i < txid.GetTx ()->vout.size (); ++i)
+      for (unsigned i = 0; i < tx.GetTx ()->vout.size (); ++i)
         {
-          const CNameScript cur(txid.GetTx ()->vout[i].scriptPubKey);
+          const CNameScript cur(tx.GetTx ()->vout[i].scriptPubKey);
           if (cur.isNameOp ())
             {
               if (nOut != -1)
-                LogDebug (BCLog::NAMES, "%s: wallet contains txid with multiple name outputs", __func__);
+                LogDebug (BCLog::NAMES, "%s: wallet contains tx with multiple name outputs", __func__);
               else
                 {
                   nameOp = cur;
@@ -265,7 +265,7 @@ namelist ()
       if (!nameFilter.empty () && nameFilter != name)
         continue;
 
-      const int depth = pwallet->GetTxDepthInMainChain(txid);
+      const int depth = pwallet->GetTxDepthInMainChain(tx);
       if (depth <= 0)
         continue;
       const int height = tipHeight - depth + 1;
@@ -276,7 +276,7 @@ namelist ()
 
       UniValue obj
         = getNameInfo (options, name, nameOp.getOpValue (),
-                       COutPoint (txid.GetHash (), nOut),
+                       COutPoint (tx.GetHash (), nOut),
                        nameOp.getAddress ());
       addOwnershipInfo (nameOp.getAddress (), pwallet, obj);
       addExpirationInfo (chainman, height, obj);
@@ -297,12 +297,12 @@ namelist ()
 
 /**
  * Generate a salt using HKDF for a given name + private key combination.
- * Indirectly used in registername and namefirstupdate.
+ * Indirectly used in name_new and name_firstupdate.
  * Refactored out to make testing easier.
  * @return True on success, false otherwise
  */
 bool
-getNameSalt(const CKey& key, const valtype& name, valtype& salt)
+getNameSalt(const CKey& key, const valtype& name, valtype& rand)
 {
     const valtype ikm(reinterpret_cast<const unsigned char*> (key.begin()),
                       reinterpret_cast<const unsigned char*> (key.end()));
@@ -312,7 +312,7 @@ getNameSalt(const CKey& key, const valtype& name, valtype& salt)
     unsigned char tmp[32];
     hkdf32.Expand32(info, tmp);
 
-    salt = valtype(tmp, tmp + 20);
+    rand = valtype(tmp, tmp + 20);
     return true;
 }
 
@@ -321,11 +321,11 @@ namespace
 
 /**
  * Generate a salt using HKDF for a given name + txout combination.
- * Used in registername and namefirstupdate.
+ * Used in name_new and name_firstupdate.
  * @return True on success, false otherwise
  */
 bool
-getNameSalt(CWallet* const pwallet, const valtype& name, const CScript& output, valtype& salt)
+getNameSalt(CWallet* const pwallet, const valtype& name, const CScript& output, valtype& rand)
 {
     AssertLockHeld(pwallet->cs_wallet);
 
@@ -348,16 +348,16 @@ getNameSalt(CWallet* const pwallet, const valtype& name, const CScript& output, 
         keyid = GetKeyForDestination(*provider, dest);
         provider->GetKey(keyid, key);
 
-        return wallet::getNameSalt(key, name, salt);
+        return wallet::getNameSalt(key, name, rand);
       }
 
     return false;
 }
 
 bool
-saltMatchesHash(const valtype& name, const valtype& salt, const valtype& expectedHash)
+saltMatchesHash(const valtype& name, const valtype& rand, const valtype& expectedHash)
 {
-    valtype toHash(salt);
+    valtype toHash(rand);
     toHash.insert (toHash.end(), name.begin(), name.end());
 
     return (Hash160(toHash) == uint160(expectedHash));
@@ -368,17 +368,17 @@ saltMatchesHash(const valtype& name, const valtype& salt, const valtype& expecte
 /* ************************************************************************** */
 
 RPCMethod
-registername ()
+name_new ()
 {
   NameOptionsHelp optHelp;
   optHelp
       .withNameEncoding ()
       .withWriteOptions ()
-      .withArg ("allow_existing", RPCArg::Type::BOOL, "false",
-                "If set, then the registername is sent even if the name exists already");
+      .withArg ("allowExisting", RPCArg::Type::BOOL, "false",
+                "If set, then the name_new is sent even if the name exists already");
 
-  return RPCMethod ("registername",
-      "Starts registration of the given name.  Must be followed up with namefirstupdate to finish the registration."
+  return RPCMethod ("name_new",
+      "Starts registration of the given name.  Must be followed up with name_firstupdate to finish the registration."
           + HELP_REQUIRING_PASSPHRASE,
       {
           {"name", RPCArg::Type::STR, RPCArg::Optional::NO, "The name to register"},
@@ -386,13 +386,13 @@ registername ()
       },
       RPCResult {RPCResult::Type::ARR_FIXED, "", "",
           {
-              {RPCResult::Type::STR_HEX, "txid", "the txid, required for namefirstupdate"},
-              {RPCResult::Type::STR_HEX, "salt", "random value, for namefirstupdate"},
+              {RPCResult::Type::STR_HEX, "txid", "the txid, required for name_firstupdate"},
+              {RPCResult::Type::STR_HEX, "rand", "random value, for name_firstupdate"},
           },
       },
       RPCExamples {
-          HelpExampleCli ("registername", "\"myname\"")
-        + HelpExampleRpc ("registername", "\"myname\"")
+          HelpExampleCli ("name_new", "\"myname\"")
+        + HelpExampleRpc ("name_new", "\"myname\"")
       },
       [&] (const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
@@ -408,7 +408,7 @@ registername ()
     options = request.params[1].get_obj ();
   RPCTypeCheckObj (options,
     {
-      {"allow_existing", UniValueType (UniValue::VBOOL)},
+      {"allowExisting", UniValueType (UniValue::VBOOL)},
     },
     true, false);
 
@@ -416,7 +416,7 @@ registername ()
   if (name.size () > MAX_NAME_LENGTH)
     throw JSONRPCError (RPC_INVALID_PARAMETER, "the name is too long");
 
-  if (!options["allow_existing"].isTrue ())
+  if (!options["allowExisting"].isTrue ())
     {
       LOCK (cs_main);
       CNameData oldData;
@@ -439,20 +439,20 @@ registername ()
 
   const CTxDestination dest = destHelper.getDest ();
 
-  valtype salt(20);
-  if (!getNameSalt (pwallet, name, GetScriptForDestination (dest), salt))
-      GetRandBytes (salt);
+  valtype rand(20);
+  if (!getNameSalt (pwallet, name, GetScriptForDestination (dest), rand))
+      GetRandBytes (rand);
 
   const CScript nameOp
-      = CNameScript::buildNameNew (CScript (), name, salt);
+      = CNameScript::buildNameNew (CScript (), name, rand);
 
   const UniValue txidVal
       = SendNameOutput (request, *pwallet, dest, nameOp, nullptr, options);
   destHelper.finalise ();
 
-  const std::string randStr = HexStr (salt);
+  const std::string randStr = HexStr (rand);
   const std::string txid = txidVal.get_str ();
-  LogInfo ("registername: name=%s, salt=%s, txid=%s\n",
+  LogInfo ("name_new: name=%s, rand=%s, tx=%s\n",
            EncodeNameForMessage (name), randStr.c_str (), txid.c_str ());
 
   UniValue res(UniValue::VARR);
@@ -471,10 +471,10 @@ namespace
 
 /**
  * Helper routine to fetch the name output of a previous transaction.  This
- * is required for namefirstupdate.
+ * is required for name_firstupdate.
  * @param txid Previous transaction ID.
  * @param txOut Set to the corresponding output.
- * @param txIn Set to the CTxIn to include in the new txid.
+ * @param txIn Set to the CTxIn to include in the new tx.
  * @return True if the output could be found.
  */
 bool
@@ -515,11 +515,11 @@ getNamePrevout (Chainstate& chainState, const Txid& txid,
 }  // anonymous namespace
 
 RPCMethod
-namefirstupdate ()
+name_firstupdate ()
 {
   /* There is an undocumented sixth argument that can be used to disable
      the check for already existing names here (it will still be checked
-     by the mempool and txid validation logic, of course).  This is used
+     by the mempool and tx validation logic, of course).  This is used
      by the regtests to catch a bug that was previously present but
      has presumably no other use.  */
 
@@ -529,21 +529,21 @@ namefirstupdate ()
       .withValueEncoding ()
       .withWriteOptions ();
 
-  return RPCMethod ("namefirstupdate",
-            "Finishes the registration of a name.  Depends on registername being already issued."
+  return RPCMethod ("name_firstupdate",
+            "Finishes the registration of a name.  Depends on name_new being already issued."
                 + HELP_REQUIRING_PASSPHRASE,
             {
                 {"name", RPCArg::Type::STR, RPCArg::Optional::NO, "The name to register"},
-                {"salt", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "The salt value of registername"},
-                {"txid", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "The registername txid"},
+                {"rand", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "The rand value of name_new"},
+                {"tx", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "The name_new txid"},
                 {"value", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Value for the name"},
                 optHelp.buildRpcArg (),
                 {"allow_active", RPCArg::Type::BOOL, RPCArg::Optional::OMITTED, "Disable check for the name being active"},
             },
             RPCResult {RPCResult::Type::STR_HEX, "", "the transaction ID"},
             RPCExamples {
-                HelpExampleCli ("namefirstupdate", "\"myname\", \"555844f2db9c7f4b25da6cb8277596de45021ef2\" \"a77ceb22aa03304b7de64ec43328974aeaca211c37dd29dcce4ae461bb80ca84\", \"my-value\"")
-              + HelpExampleRpc ("namefirstupdate", "\"myname\", \"555844f2db9c7f4b25da6cb8277596de45021ef2\", \"a77ceb22aa03304b7de64ec43328974aeaca211c37dd29dcce4ae461bb80ca84\", \"my-value\"")
+                HelpExampleCli ("name_firstupdate", "\"myname\", \"555844f2db9c7f4b25da6cb8277596de45021ef2\" \"a77ceb22aa03304b7de64ec43328974aeaca211c37dd29dcce4ae461bb80ca84\", \"my-value\"")
+              + HelpExampleRpc ("name_firstupdate", "\"myname\", \"555844f2db9c7f4b25da6cb8277596de45021ef2\", \"a77ceb22aa03304b7de64ec43328974aeaca211c37dd29dcce4ae461bb80ca84\", \"my-value\"")
             },
       [&] (const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
@@ -565,12 +565,12 @@ namefirstupdate ()
 
   const bool fixedRand = (request.params.size () >= 2 && !request.params[1].isNull ());
   const bool fixedTxid = (request.params.size () >= 3 && !request.params[2].isNull ());
-  valtype salt(20);
+  valtype rand(20);
   if (fixedRand)
     {
-      salt = ParseHexV (request.params[1], "salt");
-      if (salt.size () > 20)
-        throw JSONRPCError (RPC_INVALID_PARAMETER, "invalid salt value");
+      rand = ParseHexV (request.params[1], "rand");
+      if (rand.size () > 20)
+        throw JSONRPCError (RPC_INVALID_PARAMETER, "invalid rand value");
     }
 
   const bool isDefaultVal = (request.params.size () < 4 || request.params[3].isNull ());
@@ -611,7 +611,7 @@ namefirstupdate ()
     }
   else
     {
-      // Code slightly duplicates namescan, but not enough to be able to refactor.
+      // Code slightly duplicates name_scan, but not enough to be able to refactor.
       /* Make sure the results are valid at least up to the most recent block
          the user could have gotten from another RPC command prior to now.  */
       pwallet->BlockUntilSyncedToCurrentChain ();
@@ -620,14 +620,14 @@ namefirstupdate ()
 
       for (const auto& item : pwallet->mapWallet)
         {
-          const CWalletTx& txid = item.second;
-          if (!txid.GetTx ()->IsNamecoin ())
+          const CWalletTx& tx = item.second;
+          if (!tx.GetTx ()->IsNamecoin ())
             continue;
 
           CScript output;
           CNameScript nameOp;
           bool found = false;
-          for (CTxOut curOutput : txid.GetTx ()->vout)
+          for (CTxOut curOutput : tx.GetTx ()->vout)
             {
               CScript curScript = curOutput.scriptPubKey;
               const CNameScript cur(curScript);
@@ -636,7 +636,7 @@ namefirstupdate ()
               if (cur.getNameOp () != OP_NAME_NEW)
                 continue;
               if (found) {
-                LogDebug (BCLog::NAMES, "%s: wallet contains txid with multiple name outputs", __func__);
+                LogDebug (BCLog::NAMES, "%s: wallet contains tx with multiple name outputs", __func__);
                 continue;
               }
               nameOp = cur;
@@ -649,15 +649,15 @@ namefirstupdate ()
 
           if (!fixedRand)
             {
-              if (!getNameSalt (pwallet, name, output, salt)) // we don't have the private key for that output
+              if (!getNameSalt (pwallet, name, output, rand)) // we don't have the private key for that output
                 continue;
             }
 
-          if (!saltMatchesHash (name, salt, nameOp.getOpHash ()))
+          if (!saltMatchesHash (name, rand, nameOp.getOpHash ()))
             continue;
 
           // found it
-          prevTxid = txid.GetHash ();
+          prevTxid = tx.GetHash ();
 
           break; // if there be more than one match, the behavior is undefined
         }
@@ -679,19 +679,19 @@ namefirstupdate ()
   if (!fixedRand)
     {
       LOCK (pwallet->cs_wallet);
-      bool saltOK = getNameSalt (pwallet, name, prevOut.scriptPubKey, salt);
+      bool saltOK = getNameSalt (pwallet, name, prevOut.scriptPubKey, rand);
       if (!saltOK)
-          throw JSONRPCError (RPC_TRANSACTION_ERROR, "could not generate salt for txid");
-      if (!saltMatchesHash (name, salt, prevNameOp.getOpHash ()))
-        throw JSONRPCError (RPC_TRANSACTION_ERROR, "generated salt for txid does not match");
+          throw JSONRPCError (RPC_TRANSACTION_ERROR, "could not generate rand for txid");
+      if (!saltMatchesHash (name, rand, prevNameOp.getOpHash ()))
+        throw JSONRPCError (RPC_TRANSACTION_ERROR, "generated rand for txid does not match");
     }
 
   assert (prevNameOp.isNameOp ());
   if (prevNameOp.getNameOp () != OP_NAME_NEW)
-    throw JSONRPCError (RPC_TRANSACTION_ERROR, "previous txid is not registername");
+    throw JSONRPCError (RPC_TRANSACTION_ERROR, "previous tx is not name_new");
 
-  if (!saltMatchesHash (name, salt, prevNameOp.getOpHash ()))
-    throw JSONRPCError (RPC_TRANSACTION_ERROR, "salt value is wrong");
+  if (!saltMatchesHash (name, rand, prevNameOp.getOpHash ()))
+    throw JSONRPCError (RPC_TRANSACTION_ERROR, "rand value is wrong");
 
   /* Make sure the results are valid at least up to the most recent block
      the user could have gotten from another RPC command prior to now.  */
@@ -705,7 +705,7 @@ namefirstupdate ()
   destHelper.setOptions (options);
 
   const CScript nameOp
-    = CNameScript::buildNameFirstupdate (CScript (), name, value, salt);
+    = CNameScript::buildNameFirstupdate (CScript (), name, value, rand);
 
   const UniValue txidVal
       = SendNameOutput (request, *pwallet, destHelper.getDest (), nameOp,
@@ -720,7 +720,7 @@ namefirstupdate ()
 /* ************************************************************************** */
 
 RPCMethod
-updatename ()
+name_update ()
 {
   NameOptionsHelp optHelp;
   optHelp
@@ -728,7 +728,7 @@ updatename ()
       .withValueEncoding ()
       .withWriteOptions ();
 
-  return RPCMethod ("updatename",
+  return RPCMethod ("name_update",
       "Updates a name and possibly transfers it."
           + HELP_REQUIRING_PASSPHRASE,
       {
@@ -738,8 +738,8 @@ updatename ()
       },
       RPCResult {RPCResult::Type::STR_HEX, "", "the transaction ID"},
       RPCExamples {
-          HelpExampleCli ("updatename", "\"myname\", \"new-value\"")
-        + HelpExampleRpc ("updatename", "\"myname\", \"new-value\"")
+          HelpExampleCli ("name_update", "\"myname\", \"new-value\"")
+        + HelpExampleRpc ("name_update", "\"myname\", \"new-value\"")
       },
       [&] (const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
@@ -773,7 +773,7 @@ updatename ()
      are, then we build upon the last one to get a valid chain.  If there
      are none, then we look up the last outpoint from the name database
      instead. */
-  // TODO: Use getname for this instead.
+  // TODO: Use name_show for this instead.
 
   const unsigned chainLimit = gArgs.GetIntArg ("-limitnamechains",
                                                DEFAULT_NAME_CHAIN_LIMIT);
@@ -793,8 +793,8 @@ updatename ()
         outp = mempool.lastNameOutput (name);
         if (isDefaultVal)
           {
-            const auto& txid = mempool.mapTx.find(outp.hash)->GetTx();
-            value = CNameScript(txid.vout[outp.n].scriptPubKey).getOpValue();
+            const auto& tx = mempool.mapTx.find(outp.hash)->GetTx();
+            value = CNameScript(tx.vout[outp.n].scriptPubKey).getOpValue();
           }
       }
   }
@@ -977,9 +977,9 @@ listqueuedtransactions ()
   for (const auto& i : wallet->queuedTransactionMap)
   {
     const Txid& txid = i.first;
-    const CMutableTransaction& txid = i.second;
+    const CMutableTransaction& tx = i.second;
 
-    const std::string txStr = EncodeHexTx(CTransaction(txid));
+    const std::string txStr = EncodeHexTx(CTransaction(tx));
 
     UniValue entry(UniValue::VOBJ);
     entry.pushKV("transaction", txStr);

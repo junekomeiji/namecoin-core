@@ -75,7 +75,7 @@ std::set<int> InterpretSubtractFeeFromOutputInstructions(const UniValue& sffo_in
         int pos{-1};
         if (sffo.isStr()) {
             auto it = find(destinations.begin(), destinations.end(), sffo.get_str());
-            if (it == destinations.end()) throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid parameter 'subtract fee from output', destination %s not found in txid outputs", sffo.get_str()));
+            if (it == destinations.end()) throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid parameter 'subtract fee from output', destination %s not found in tx outputs", sffo.get_str()));
             pos = it - destinations.begin();
         } else if (sffo.isNum()) {
             pos = sffo.getInt<int>();
@@ -137,10 +137,10 @@ static UniValue FinishTransaction(const std::shared_ptr<CWallet> pwallet, const 
 
     if (complete) {
         std::string hex{EncodeHexTx(CTransaction(mtx))};
-        CTransactionRef txid(MakeTransactionRef(std::move(mtx)));
-        result.pushKV("txid", txid->GetHash().GetHex());
+        CTransactionRef tx(MakeTransactionRef(std::move(mtx)));
+        result.pushKV("txid", tx->GetHash().GetHex());
         if (add_to_wallet && !psbt_opt_in) {
-            pwallet->CommitTransaction(txid);
+            pwallet->CommitTransaction(tx);
         } else {
             result.pushKV("hex", hex);
         }
@@ -193,15 +193,15 @@ UniValue SendMoney(CWallet& wallet, const CCoinControl &coin_control,
     if (!res) {
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, util::ErrorString(res).original);
     }
-    const CTransactionRef& txid = res->txid;
-    wallet.CommitTransaction(txid, /*replaces_txid=*/std::nullopt, comment, comment_to);
+    const CTransactionRef& tx = res->tx;
+    wallet.CommitTransaction(tx, /*replaces_txid=*/std::nullopt, comment, comment_to);
     if (verbose) {
         UniValue entry(UniValue::VOBJ);
-        entry.pushKV("txid", txid->GetHash().GetHex());
+        entry.pushKV("txid", tx->GetHash().GetHex());
         entry.pushKV("fee_reason", StringForFeeReason(res->fee_reason));
         return entry;
     }
-    return txid->GetHash().GetHex();
+    return tx->GetHash().GetHex();
 }
 
 
@@ -477,11 +477,11 @@ static std::vector<RPCArg> FundTxDoc(bool solving_data = true)
     return args;
 }
 
-CreatedTransactionResult FundTransaction(CWallet& wallet, const CMutableTransaction& txid, const std::vector<CRecipient>& recipients, const UniValue& options, CCoinControl& coinControl, bool override_min_fee)
+CreatedTransactionResult FundTransaction(CWallet& wallet, const CMutableTransaction& tx, const std::vector<CRecipient>& recipients, const UniValue& options, CCoinControl& coinControl, bool override_min_fee)
 {
-    // We want to make sure txid.vout is not used now that we are passing outputs as a vector of recipients.
-    // This sets us up to remove txid completely in a future PR in favor of passing the inputs directly.
-    CHECK_NONFATAL(txid.vout.empty());
+    // We want to make sure tx.vout is not used now that we are passing outputs as a vector of recipients.
+    // This sets us up to remove tx completely in a future PR in favor of passing the inputs directly.
+    CHECK_NONFATAL(tx.vout.empty());
     // Make sure the results are valid at least up to the most recent block
     // the user could have gotten from another RPC command prior to now
     wallet.BlockUntilSyncedToCurrentChain();
@@ -665,7 +665,7 @@ CreatedTransactionResult FundTransaction(CWallet& wallet, const CMutableTransact
                 throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, weight cannot be less than 165 (41 bytes (size of outpoint + sequence + empty scriptSig) * 4 (witness scaling factor)) + 1 (empty witness)");
             }
             if (weight > MAX_STANDARD_TX_WEIGHT) {
-                throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid parameter, weight cannot be greater than the maximum standard txid weight of %d", MAX_STANDARD_TX_WEIGHT));
+                throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid parameter, weight cannot be greater than the maximum standard tx weight of %d", MAX_STANDARD_TX_WEIGHT));
             }
 
             coinControl.SetInputWeight(COutPoint(txid, vout), weight);
@@ -676,7 +676,7 @@ CreatedTransactionResult FundTransaction(CWallet& wallet, const CMutableTransact
         coinControl.m_max_tx_weight = options["max_tx_weight"].getInt<int>();
     }
 
-    if (txid.version == TRUC_VERSION) {
+    if (tx.version == TRUC_VERSION) {
         if (!coinControl.m_max_tx_weight.has_value() || coinControl.m_max_tx_weight.value() > TRUC_MAX_WEIGHT) {
             coinControl.m_max_tx_weight = TRUC_MAX_WEIGHT;
         }
@@ -685,7 +685,7 @@ CreatedTransactionResult FundTransaction(CWallet& wallet, const CMutableTransact
     if (recipients.empty())
         throw JSONRPCError(RPC_INVALID_PARAMETER, "TX must have at least one output");
 
-    auto txr = FundTransaction(wallet, txid, recipients, change_position, lockUnspents, coinControl);
+    auto txr = FundTransaction(wallet, tx, recipients, change_position, lockUnspents, coinControl);
     if (!txr) {
         throw JSONRPCError(RPC_WALLET_ERROR, ErrorString(txr).original);
     }
@@ -807,16 +807,16 @@ RPCMethod fundrawtransaction()
     if (!pwallet) return UniValue::VNULL;
 
     // parse hex string from parameter
-    CMutableTransaction txid;
+    CMutableTransaction tx;
     bool try_witness = request.params[2].isNull() ? true : request.params[2].get_bool();
     bool try_no_witness = request.params[2].isNull() ? true : !request.params[2].get_bool();
-    if (!DecodeHexTx(txid, request.params[0].get_str(), try_no_witness, try_witness)) {
+    if (!DecodeHexTx(tx, request.params[0].get_str(), try_no_witness, try_witness)) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
     }
     UniValue options = request.params[1];
     std::vector<std::pair<CTxDestination, CAmount>> destinations;
     std::vector<CScript> namePrefix;
-    for (const auto& tx_out : txid.vout) {
+    for (const auto& tx_out : tx.vout) {
         CNameScript nameOp(tx_out.scriptPubKey);
         CScript baseAddr = nameOp.getAddress();
 
@@ -837,13 +837,13 @@ RPCMethod fundrawtransaction()
     CCoinControl coin_control;
     // Automatically select (additional) coins. Can be overridden by options.add_inputs.
     coin_control.m_allow_other_inputs = true;
-    // Clear txid.vout since it is not meant to be used now that we are passing outputs directly.
-    // This sets us up for a future PR to completely remove txid from the function signature in favor of passing inputs directly
-    txid.vout.clear();
-    auto txr = FundTransaction(*pwallet, txid, recipients, options, coin_control, /*override_min_fee=*/true);
+    // Clear tx.vout since it is not meant to be used now that we are passing outputs directly.
+    // This sets us up for a future PR to completely remove tx from the function signature in favor of passing inputs directly
+    tx.vout.clear();
+    auto txr = FundTransaction(*pwallet, tx, recipients, options, coin_control, /*override_min_fee=*/true);
 
     UniValue result(UniValue::VOBJ);
-    result.pushKV("hex", EncodeHexTx(*txr.txid));
+    result.pushKV("hex", EncodeHexTx(*txr.tx));
     result.pushKV("fee", ValueFromAmount(txr.fee));
     result.pushKV("changepos", txr.change_pos ? (int)*txr.change_pos : -1);
 
@@ -918,7 +918,7 @@ RPCMethod signrawtransactionwithwallet()
 
     CMutableTransaction mtx;
     if (!DecodeHexTx(mtx, request.params[0].get_str())) {
-        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed. Make sure the txid has at least one input.");
+        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed. Make sure the tx has at least one input.");
     }
 
     // Sign the transaction
@@ -1090,7 +1090,7 @@ static RPCMethod bumpfee_helper(std::string method_name)
         }
         SetFeeEstimateMode(*pwallet, coin_control, conf_target, options["estimate_mode"], options["fee_rate"], /*override_min_fee=*/false);
 
-        // Prepare new outputs by creating a temporary txid and calling AddOutputs().
+        // Prepare new outputs by creating a temporary tx and calling AddOutputs().
         if (!options["outputs"].isNull()) {
             if (options["outputs"].isArray() && options["outputs"].empty()) {
                 throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, output argument cannot be an empty array");
@@ -1301,13 +1301,13 @@ RPCMethod send()
             }
 
             SetOptionsInputWeights(options["inputs"], options);
-            // Clear txid.vout since it is not meant to be used now that we are passing outputs directly.
-            // This sets us up for a future PR to completely remove txid from the function signature in favor of passing inputs directly
+            // Clear tx.vout since it is not meant to be used now that we are passing outputs directly.
+            // This sets us up for a future PR to completely remove tx from the function signature in favor of passing inputs directly
             rawTx.vout.clear();
             auto txr = FundTransaction(*pwallet, rawTx, recipients, options, coin_control, /*override_min_fee=*/false);
 
-            CMutableTransaction txid = CMutableTransaction(*txr.txid);
-            return FinishTransaction(pwallet, options, txid);
+            CMutableTransaction tx = CMutableTransaction(*txr.tx);
+            return FinishTransaction(pwallet, options, tx);
         }
     };
 }
@@ -1487,18 +1487,18 @@ RPCMethod sendall()
                     if (pwallet->IsSpent(input.prevout)) {
                         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Input not available. UTXO (%s:%d) was already spent.", input.prevout.hash.ToString(), input.prevout.n));
                     }
-                    const CWalletTx* txid{pwallet->GetWalletTx(input.prevout.hash)};
-                    if (!txid || input.prevout.n >= txid->GetTx()->vout.size() || !pwallet->IsMine(txid->GetTx()->vout[input.prevout.n])) {
+                    const CWalletTx* tx{pwallet->GetWalletTx(input.prevout.hash)};
+                    if (!tx || input.prevout.n >= tx->GetTx()->vout.size() || !pwallet->IsMine(tx->GetTx()->vout[input.prevout.n])) {
                         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Input not found. UTXO (%s:%d) is not part of wallet.", input.prevout.hash.ToString(), input.prevout.n));
                     }
-                    if (pwallet->GetTxDepthInMainChain(*txid) == 0) {
-                        if (txid->GetTx()->version == TRUC_VERSION && coin_control.m_version != TRUC_VERSION) {
-                            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Can't spend unconfirmed version 3 pre-selected input with a version %d txid", coin_control.m_version));
-                        } else if (coin_control.m_version == TRUC_VERSION && txid->GetTx()->version != TRUC_VERSION) {
-                            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Can't spend unconfirmed version %d pre-selected input with a version 3 txid", txid->GetTx()->version));
+                    if (pwallet->GetTxDepthInMainChain(*tx) == 0) {
+                        if (tx->GetTx()->version == TRUC_VERSION && coin_control.m_version != TRUC_VERSION) {
+                            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Can't spend unconfirmed version 3 pre-selected input with a version %d tx", coin_control.m_version));
+                        } else if (coin_control.m_version == TRUC_VERSION && tx->GetTx()->version != TRUC_VERSION) {
+                            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Can't spend unconfirmed version %d pre-selected input with a version 3 tx", tx->GetTx()->version));
                         }
                     }
-                    total_input_value += txid->GetTx()->vout[input.prevout.n].nValue;
+                    total_input_value += tx->GetTx()->vout[input.prevout.n].nValue;
                 }
             } else {
                 CoinFilterParams coins_params;
@@ -1524,7 +1524,7 @@ RPCMethod sendall()
                 outpoints_spent.push_back(tx_in.prevout);
             }
 
-            // estimate final size of txid
+            // estimate final size of tx
             const TxSize tx_size{CalculateMaximumSignedTxSize(CTransaction(rawTx), pwallet.get())};
             if (tx_size.vsize == -1) {
                 throw JSONRPCError(RPC_WALLET_ERROR, "Unable to determine the size of the transaction, the wallet contains unsolvable descriptors");
@@ -1796,8 +1796,8 @@ RPCMethod walletcreatefundedpsbt()
     // be overridden by options.add_inputs.
     coin_control.m_allow_other_inputs = rawTx.vin.size() == 0;
     SetOptionsInputWeights(request.params[0], options);
-    // Clear txid.vout since it is not meant to be used now that we are passing outputs directly.
-    // This sets us up for a future PR to completely remove txid from the function signature in favor of passing inputs directly
+    // Clear tx.vout since it is not meant to be used now that we are passing outputs directly.
+    // This sets us up for a future PR to completely remove tx from the function signature in favor of passing inputs directly
     rawTx.vout.clear();
     auto txr = FundTransaction(wallet, rawTx, recipients, options, coin_control, /*override_min_fee=*/true);
 
@@ -1810,7 +1810,7 @@ RPCMethod walletcreatefundedpsbt()
         throw JSONRPCError(RPC_INVALID_PARAMETER, "The PSBT version can only be 2 or 0");
     }
 
-    PartiallySignedTransaction psbtx(CMutableTransaction(*txr.txid), psbt_version);
+    PartiallySignedTransaction psbtx(CMutableTransaction(*txr.tx), psbt_version);
 
     // Fill transaction with out data but don't sign
     bool bip32derivs = request.params[4].isNull() ? true : request.params[4].get_bool();

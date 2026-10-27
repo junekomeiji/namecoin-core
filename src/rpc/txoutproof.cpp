@@ -85,8 +85,8 @@ static RPCMethod gettxoutproof()
                 Chainstate& active_chainstate = chainman.ActiveChainstate();
 
                 // Loop through txids and try to find which block they're in. Exit loop once a block is found.
-                for (const auto& txid : setTxids) {
-                    const Coin& coin{AccessByTxid(active_chainstate.CoinsTip(), txid)};
+                for (const auto& tx : setTxids) {
+                    const Coin& coin{AccessByTxid(active_chainstate.CoinsTip(), tx)};
                     if (!coin.IsSpent()) {
                         pblockindex = active_chainstate.m_chain[coin.nHeight];
                         break;
@@ -101,8 +101,8 @@ static RPCMethod gettxoutproof()
             }
 
             if (pblockindex == nullptr) {
-                const CTransactionRef txid = GetTransaction(/*block_index=*/nullptr, /*mempool=*/nullptr, *setTxids.begin(), chainman.m_blockman, hashBlock);
-                if (!txid || hashBlock.IsNull()) {
+                const CTransactionRef tx = GetTransaction(/*block_index=*/nullptr, /*mempool=*/nullptr, *setTxids.begin(), chainman.m_blockman, hashBlock);
+                if (!tx || hashBlock.IsNull()) {
                     throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not yet in block");
                 }
 
@@ -123,8 +123,8 @@ static RPCMethod gettxoutproof()
             }
 
             unsigned int ntxFound = 0;
-            for (const auto& txid : block.vtx) {
-                if (setTxids.contains(txid->GetHash())) {
+            for (const auto& tx : block.vtx) {
+                if (setTxids.contains(tx->GetHash())) {
                     ntxFound++;
                 }
             }

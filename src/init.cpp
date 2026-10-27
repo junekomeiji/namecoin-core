@@ -556,7 +556,7 @@ void SetupServerArgs(ArgsManager& argsman, bool can_listen_ipc)
                  strprintf("Maintain an index of compact filters by block (default: %s, values: %s).", DEFAULT_BLOCKFILTERINDEX, ListBlockFilterTypes()) +
                  " If <type> is not supplied or if <type> = 1, indexes for all known types are enabled.",
                  ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
-    gArgs.AddArg("-getnamehistory", strprintf("Keep track of the full name history (default: %u)", 0), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
+    gArgs.AddArg("-namehistory", strprintf("Keep track of the full name history (default: %u)", 0), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     gArgs.AddArg("-namehashindex", strprintf("Maintain an index of name hashes to preimages (default: %u)", DEFAULT_NAMEHASHINDEX), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
 
     argsman.AddArg("-addnode=<ip>", strprintf("Add a node to connect to and attempt to keep the connection open (see the addnode RPC help for more info). This option can be specified multiple times to add multiple nodes; connections are limited to %u at a time and are counted separately from the -maxconnections limit.", MAX_ADDNODE_CONNECTIONS), ArgsManager::ALLOW_ANY | ArgsManager::NETWORK_ONLY, OptionsCategory::CONNECTION);
@@ -758,7 +758,7 @@ void SetupServerArgs(ArgsManager& argsman, bool can_listen_ipc)
 
     gArgs.AddArg("-nameencoding=<enc>", strprintf("Sets the default encoding used for names in the RPC interface (default: %s)", EncodingToString(DEFAULT_NAME_ENCODING)), ArgsManager::ALLOW_ANY, OptionsCategory::RPC);
     gArgs.AddArg("-valueencoding=<enc>", strprintf("Sets the default encoding used for values in the RPC interface (default: %s)", EncodingToString(DEFAULT_VALUE_ENCODING)), ArgsManager::ALLOW_ANY, OptionsCategory::RPC);
-    gArgs.AddArg("-limitnamechains=<n>", strprintf("Limit pending chains of name operations for updatename to <n> (default: %u)", DEFAULT_NAME_CHAIN_LIMIT), ArgsManager::ALLOW_ANY, OptionsCategory::RPC);
+    gArgs.AddArg("-limitnamechains=<n>", strprintf("Limit pending chains of name operations for name_update to <n> (default: %u)", DEFAULT_NAME_CHAIN_LIMIT), ArgsManager::ALLOW_ANY, OptionsCategory::RPC);
     gArgs.AddArg("-allowexpired", strprintf("Throw error on expired names (default: %u)", DEFAULT_ALLOWEXPIRED), ArgsManager::ALLOW_ANY, OptionsCategory::RPC);
     gArgs.AddArg("-checknamedb", "Check name database for consistency every x blocks, -1 to disable", ArgsManager::ALLOW_ANY, OptionsCategory::DEBUG_TEST);
 
@@ -1494,7 +1494,7 @@ static ChainstateLoadResult InitAndLoadChainstate(
             }
         }
     };
-    fNameHistory = args.GetBoolArg("-getnamehistory", false);
+    fNameHistory = args.GetBoolArg("-namehistory", false);
     node::ChainstateLoadOptions options;
     options.mempool = Assert(node.mempool.get());
     options.wipe_chainstate_db = do_reindex || do_reindex_chainstate;

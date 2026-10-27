@@ -59,7 +59,7 @@ static ChainstateLoadResult CompleteChainstateInitialization(
         return {ChainstateLoadStatus::FAILURE, _("You need to rebuild the database using -reindex to go back to unpruned mode.  This will redownload the entire blockchain")};
     }
 
-    // Check for changed -getnamehistory state
+    // Check for changed -namehistory state
     if (options.nameHistory != fNameHistory) {
         return {ChainstateLoadStatus::FAILURE, _("You need to rebuild the database using -reindex to change the name-history flag.")};
     }
