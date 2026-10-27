@@ -87,7 +87,7 @@ static void SetupBitcoinTxArgs(ArgsManager &argsman)
     argsman.AddArg("load=NAME:FILENAME", "Load JSON file FILENAME into register NAME", ArgsManager::ALLOW_ANY, OptionsCategory::REGISTER_COMMANDS);
     argsman.AddArg("set=NAME:JSON-STRING", "Set register NAME to given JSON-STRING", ArgsManager::ALLOW_ANY, OptionsCategory::REGISTER_COMMANDS);
 
-    argsman.AddArg("namenew=N:NAME:RAND",
+    argsman.AddArg("registername=N:NAME:RAND",
                    "Turns the existing output N into a NAME_NEW operation"
                    " with the given hex-encoded NAME and RAND.",
                    ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
@@ -95,7 +95,7 @@ static void SetupBitcoinTxArgs(ArgsManager &argsman)
                    "Turns the existing output N into a NAME_FIRSTUPDATE operation"
                    " with the given hex-encoded NAME, VALUE and RAND.",
                    ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
-    argsman.AddArg("nameupdate=N:NAME:VALUE",
+    argsman.AddArg("updatename=N:NAME:VALUE",
                    "Turns the existing output N into a NAME_UPDATE operation"
                    " with the given hex-encoded NAME and VALUE.",
                    ArgsManager::ALLOW_ANY, OptionsCategory::COMMANDS);
@@ -567,10 +567,10 @@ MutateTxNameOutput (CMutableTransaction& tx, const std::string& command,
 
   /* Build the name script according to the command.  */
   CScript nameOp;
-  if (command == "namenew")
+  if (command == "registername")
     {
       if (data.size () != 2)
-        throw std::runtime_error ("namenew expects N:NAME:RAND");
+        throw std::runtime_error ("registername expects N:NAME:RAND");
       nameOp = CNameScript::buildNameNew (addr, data[0], data[1]);
     }
   else if (command == "namefirstupdate")
@@ -580,10 +580,10 @@ MutateTxNameOutput (CMutableTransaction& tx, const std::string& command,
       nameOp = CNameScript::buildNameFirstupdate (addr, data[0], data[1],
                                                   data[2]);
     }
-  else if (command == "nameupdate")
+  else if (command == "updatename")
     {
       if (data.size () != 2)
-        throw std::runtime_error ("nameupdate expects N:NAME:VALUE");
+        throw std::runtime_error ("updatename expects N:NAME:VALUE");
       nameOp = CNameScript::buildNameUpdate (addr, data[0], data[1]);
     }
   else
@@ -817,9 +817,9 @@ static void MutateTx(CMutableTransaction& tx, const std::string& command,
     else if (command == "outdata")
         MutateTxAddOutData(tx, commandVal);
 
-    else if (command == "namenew"
+    else if (command == "registername"
               || command == "namefirstupdate"
-              || command == "nameupdate")
+              || command == "updatename")
         MutateTxNameOutput(tx, command, commandVal);
 
     else if (command == "sign") {

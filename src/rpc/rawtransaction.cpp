@@ -85,7 +85,7 @@ using node::PSBTAnalysis;
 
 static constexpr decltype(CTransaction::version) DEFAULT_RAWTX_VERSION{CTransaction::CURRENT_VERSION};
 
-void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry,
+void TxToJSON(const CTransaction& txid, const uint256 hashBlock, UniValue& entry,
               Chainstate& active_chainstate, const CTxUndo* txundo,
               TxVerbosity verbosity)
 {
@@ -95,7 +95,7 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry,
     // Blockchain contextual information (confirmations and blocktime) is not
     // available to code in bitcoin-common, so we query them here and push the
     // data into the returned UniValue.
-    TxToUniv(tx, /*block_hash=*/uint256(), entry, /*include_hex=*/true, txundo, verbosity);
+    TxToUniv(txid, /*block_hash=*/uint256(), entry, /*include_hex=*/true, txundo, verbosity);
 
     if (!hashBlock.IsNull()) {
         LOCK(cs_main);
@@ -178,18 +178,18 @@ PartiallySignedTransaction ProcessPSBT(const std::string& psbt_string, const std
         // The `non_witness_utxo` is the whole previous transaction
         if (psbt_input.non_witness_utxo) continue;
 
-        CTransactionRef tx;
+        CTransactionRef txid;
 
         // Look in the txindex
         if (g_txindex) {
-            if (auto result{g_txindex->FindTx(psbt_input.prev_txid)}) tx = result->tx;
+            if (auto result{g_txindex->FindTx(psbt_input.prev_txid)}) txid = result->txid;
         }
         // If we still don't have it look in the mempool
-        if (!tx) {
-            tx = node.mempool->get(psbt_input.prev_txid);
+        if (!txid) {
+            txid = node.mempool->get(psbt_input.prev_txid);
         }
-        if (tx) {
-            psbt_input.non_witness_utxo = tx;
+        if (txid) {
+            psbt_input.non_witness_utxo = txid;
         } else {
             coins[psbt_input.GetOutPoint()]; // Create empty map entry keyed by prevout
         }
@@ -331,8 +331,8 @@ static RPCMethod getrawtransaction()
     }
 
     uint256 hash_block;
-    const CTransactionRef tx = GetTransaction(blockindex, node.mempool.get(), txid, chainman.m_blockman, hash_block);
-    if (!tx) {
+    const CTransactionRef txid = GetTransaction(blockindex, node.mempool.get(), txid, chainman.m_blockman, hash_block);
+    if (!txid) {
         std::string errmsg;
         if (blockindex) {
             const bool block_has_data = WITH_LOCK(::cs_main, return blockindex->nStatus & BLOCK_HAVE_DATA);
@@ -351,7 +351,7 @@ static RPCMethod getrawtransaction()
     }
 
     if (verbosity <= 0) {
-        return EncodeHexTx(*tx);
+        return EncodeHexTx(*txid);
     }
 
     UniValue result(UniValue::VOBJ);
@@ -367,22 +367,22 @@ static RPCMethod getrawtransaction()
 
     // Add sigop-adjusted virtual size if the transaction exists in the mempool.
     if (blockindex == nullptr && hash_block.IsNull() && node.mempool) {
-        auto info = node.mempool->info(tx->GetHash());
-        if (info.tx) {
+        auto info = node.mempool->info(txid->GetHash());
+        if (info.txid) {
             result.pushKV("vsize_adjusted", info.vsize);
         }
     }
 
     if (verbosity == 1) {
-        TxToJSON(*tx, hash_block, result, chainman.ActiveChainstate());
+        TxToJSON(*txid, hash_block, result, chainman.ActiveChainstate());
         return result;
     }
 
     CBlockUndo blockUndo;
     CBlock block;
 
-    if (tx->IsCoinBase() || !blockindex || WITH_LOCK(::cs_main, return !(blockindex->nStatus & BLOCK_HAVE_MASK))) {
-        TxToJSON(*tx, hash_block, result, chainman.ActiveChainstate());
+    if (txid->IsCoinBase() || !blockindex || WITH_LOCK(::cs_main, return !(blockindex->nStatus & BLOCK_HAVE_MASK))) {
+        TxToJSON(*txid, hash_block, result, chainman.ActiveChainstate());
         return result;
     }
     if (!chainman.m_blockman.ReadBlockUndo(blockUndo, *blockindex)) {
@@ -393,12 +393,12 @@ static RPCMethod getrawtransaction()
     }
 
     CTxUndo* undoTX {nullptr};
-    auto it = std::find_if(block.vtx.begin(), block.vtx.end(), [tx](CTransactionRef t){ return t->Equals(*tx); });
+    auto it = std::find_if(block.vtx.begin(), block.vtx.end(), [txid](CTransactionRef t){ return t->Equals(*txid); });
     if (it != block.vtx.end()) {
-        // -1 as blockundo does not have coinbase tx
+        // -1 as blockundo does not have coinbase txid
         undoTX = &blockUndo.vtxundo.at(it - block.vtx.begin() - 1);
     }
-    TxToJSON(*tx, hash_block, result, chainman.ActiveChainstate(), undoTX, TxVerbosity::SHOW_DETAILS_AND_PREVOUT);
+    TxToJSON(*txid, hash_block, result, chainman.ActiveChainstate(), undoTX, TxVerbosity::SHOW_DETAILS_AND_PREVOUT);
     return result;
 },
     };
@@ -647,7 +647,7 @@ static RPCMethod combinerawtransaction()
 
     for (unsigned int idx = 0; idx < txs.size(); idx++) {
         if (!DecodeHexTx(txVariants[idx], txs[idx].get_str())) {
-            throw JSONRPCError(RPC_DESERIALIZATION_ERROR, strprintf("TX decode failed for tx %d. Make sure the tx has at least one input.", idx));
+            throw JSONRPCError(RPC_DESERIALIZATION_ERROR, strprintf("TX decode failed for txid %d. Make sure the txid has at least one input.", idx));
         }
     }
 
@@ -788,7 +788,7 @@ static RPCMethod signrawtransactionwithkey()
 {
     CMutableTransaction mtx;
     if (!DecodeHexTx(mtx, request.params[0].get_str())) {
-        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed. Make sure the tx has at least one input.");
+        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed. Make sure the txid has at least one input.");
     }
 
     FlatSigningProvider keystore;
@@ -1087,7 +1087,7 @@ static RPCMethod decodepsbt()
                 RPCResult{
                     RPCResult::Type::OBJ, "", "",
                     {
-                        {RPCResult::Type::OBJ, "tx", /*optional=*/true, "The decoded network-serialized unsigned transaction.",
+                        {RPCResult::Type::OBJ, "txid", /*optional=*/true, "The decoded network-serialized unsigned transaction.",
                             TxDoc({.elision_mode = ElisionMode::WithSummary, .elision_summary = "The layout is the same as the output of decoderawtransaction."})
                         },
                         {RPCResult::Type::ARR, "global_xpubs", "",
@@ -1141,10 +1141,10 @@ static RPCMethod decodepsbt()
     UniValue result(UniValue::VOBJ);
 
     if (psbtx.GetVersion() < 2) {
-        // Add the decoded tx
+        // Add the decoded txid
         UniValue tx_univ(UniValue::VOBJ);
         TxToUniv(CTransaction(*CHECK_NONFATAL(psbtx.GetUnsignedTx())), /*block_hash=*/uint256(), /*entry=*/tx_univ, /*include_hex=*/false);
-        result.pushKV("tx", std::move(tx_univ));
+        result.pushKV("txid", std::move(tx_univ));
     }
 
     // Add the global xpubs
@@ -1806,18 +1806,18 @@ static RPCMethod converttopsbt()
         [](const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
     // parse hex string from parameter
-    CMutableTransaction tx;
+    CMutableTransaction txid;
     bool permitsigdata = request.params[1].isNull() ? false : request.params[1].get_bool();
     bool witness_specified = !request.params[2].isNull();
     bool iswitness = witness_specified ? request.params[2].get_bool() : false;
     const bool try_witness = witness_specified ? iswitness : true;
     const bool try_no_witness = witness_specified ? !iswitness : true;
-    if (!DecodeHexTx(tx, request.params[0].get_str(), try_no_witness, try_witness)) {
+    if (!DecodeHexTx(txid, request.params[0].get_str(), try_no_witness, try_witness)) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
     }
 
     // Remove all scriptSigs and scriptWitnesses from inputs
-    for (CTxIn& input : tx.vin) {
+    for (CTxIn& input : txid.vin) {
         if ((!input.scriptSig.empty() || !input.scriptWitness.IsNull()) && !permitsigdata) {
             throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Inputs must not have scriptSigs and scriptWitnesses");
         }
@@ -1833,7 +1833,7 @@ static RPCMethod converttopsbt()
     if (psbt_version != 2 && psbt_version != 0) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "The PSBT version can only be 2 or 0");
     }
-    PartiallySignedTransaction psbtx(tx, psbt_version);
+    PartiallySignedTransaction psbtx(txid, psbt_version);
 
     // Serialize the PSBT
     DataStream ssTx{};
@@ -1943,10 +1943,10 @@ static RPCMethod joinpsbts()
     }
 
     // Create a blank psbt where everything will be added
-    CMutableTransaction tx;
-    tx.version = best_version;
-    tx.nLockTime = best_locktime;
-    PartiallySignedTransaction merged_psbt(tx, psbtxs.at(0).GetVersion());
+    CMutableTransaction txid;
+    txid.version = best_version;
+    txid.nLockTime = best_locktime;
+    PartiallySignedTransaction merged_psbt(txid, psbtxs.at(0).GetVersion());
 
     // Merge
     for (auto& psbt : psbtxs) {

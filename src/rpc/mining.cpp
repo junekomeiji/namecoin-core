@@ -387,18 +387,18 @@ static RPCMethod generateblock()
 
         CMutableTransaction mtx;
         if (auto txid{Txid::FromHex(str)}) {
-            const auto tx{mempool.get(*txid)};
-            if (!tx) {
+            const auto txid{mempool.get(*txid)};
+            if (!txid) {
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, strprintf("Transaction %s not in mempool.", str));
             }
 
-            txs.emplace_back(tx);
+            txs.emplace_back(txid);
 
         } else if (DecodeHexTx(mtx, str)) {
             txs.push_back(MakeTransactionRef(std::move(mtx)));
 
         } else {
-            throw JSONRPCError(RPC_DESERIALIZATION_ERROR, strprintf("Transaction decode failed for %s. Make sure the tx has at least one input.", str));
+            throw JSONRPCError(RPC_DESERIALIZATION_ERROR, strprintf("Transaction decode failed for %s. Make sure the txid has at least one input.", str));
         }
     }
 
@@ -456,7 +456,7 @@ static RPCMethod getmininginfo()
                     {
                         {RPCResult::Type::NUM, "blocks", "The current block"},
                         {RPCResult::Type::STR_HEX, "bestblockhash", "The hash of the current best block"},
-                        {RPCResult::Type::NUM, "currentblockweight", /*optional=*/true, "The block weight (including reserved weight for block header, txs count and coinbase tx) of the last assembled block (only present if a block was ever assembled)"},
+                        {RPCResult::Type::NUM, "currentblockweight", /*optional=*/true, "The block weight (including reserved weight for block header, txs count and coinbase txid) of the last assembled block (only present if a block was ever assembled)"},
                         {RPCResult::Type::NUM, "currentblocktx", /*optional=*/true, "The number of block transactions (excluding coinbase) of the last assembled block (only present if a block was ever assembled)"},
                         {RPCResult::Type::STR_HEX, "bits", "The current nBits, compact representation of the block difficulty target"},
                         {RPCResult::Type::NUM, "difficulty", "The current difficulty"},
@@ -567,8 +567,8 @@ static RPCMethod prioritisetransaction()
     CTxMemPool& mempool = EnsureAnyMemPool(request.context);
 
     // Non-0 fee dust transactions are not allowed for entry, and modification not allowed afterwards
-    const auto& tx = mempool.get(txid);
-    if (mempool.m_opts.require_standard && tx && !GetDust(*tx, mempool.m_opts.dust_relay_feerate).empty()) {
+    const auto& txid = mempool.get(txid);
+    if (mempool.m_opts.require_standard && txid && !GetDust(*txid, mempool.m_opts.dust_relay_feerate).empty()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Priority is not supported for transactions with dust outputs.");
     }
 
@@ -581,7 +581,7 @@ static RPCMethod prioritisetransaction()
 static RPCMethod getprioritisedtransactions()
 {
     return RPCMethod{"getprioritisedtransactions",
-        "Returns a map of all user-created (see prioritisetransaction) fee deltas by txid, and whether the tx is present in mempool.",
+        "Returns a map of all user-created (see prioritisetransaction) fee deltas by txid, and whether the txid is present in mempool.",
         {},
         RPCResult{
             RPCResult::Type::OBJ_DYN, "", "prioritisation keyed by txid",
@@ -935,21 +935,21 @@ static RPCMethod getblocktemplate()
 
     int i = 0;
     for (const auto& it : block_template->block.vtx) {
-        const CTransaction& tx = *it;
-        Txid txHash = tx.GetHash();
+        const CTransaction& txid = *it;
+        Txid txHash = txid.GetHash();
         setTxIndex[txHash] = i++;
 
-        if (tx.IsCoinBase())
+        if (txid.IsCoinBase())
             continue;
 
         UniValue entry(UniValue::VOBJ);
 
-        entry.pushKV("data", EncodeHexTx(tx));
+        entry.pushKV("data", EncodeHexTx(txid));
         entry.pushKV("txid", txHash.GetHex());
-        entry.pushKV("hash", tx.GetWitnessHash().GetHex());
+        entry.pushKV("hash", txid.GetWitnessHash().GetHex());
 
         UniValue deps(UniValue::VARR);
-        for (const CTxIn &in : tx.vin)
+        for (const CTxIn &in : txid.vin)
         {
             if (setTxIndex.contains(in.prevout.hash))
                 deps.push_back(setTxIndex[in.prevout.hash]);
@@ -964,7 +964,7 @@ static RPCMethod getblocktemplate()
             nTxSigOps /= WITNESS_SCALE_FACTOR;
         }
         entry.pushKV("sigops", nTxSigOps);
-        entry.pushKV("weight", GetTransactionWeight(tx));
+        entry.pushKV("weight", GetTransactionWeight(txid));
 
         transactions.push_back(std::move(entry));
     }

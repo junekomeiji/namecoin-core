@@ -172,12 +172,12 @@ CheckNameTransaction (const CTransaction& tx, unsigned nHeight,
     {
       if (nameIn != -1)
         return state.Invalid (TxValidationResult::TX_CONSENSUS,
-                              "tx-namenew-with-name-input",
+                              "tx-registername-with-name-input",
                               "NAME_NEW with previous name input");
 
       if (nameOpOut.getOpHash ().size () != 20)
         return state.Invalid (TxValidationResult::TX_CONSENSUS,
-                              "tx-namenew-wrong-size",
+                              "tx-registername-wrong-size",
                               "NAME_NEW's hash has the wrong size");
 
       return true;
@@ -189,7 +189,7 @@ CheckNameTransaction (const CTransaction& tx, unsigned nHeight,
   assert (nameOpOut.isAnyUpdate ());
   if (nameIn == -1)
     return state.Invalid (TxValidationResult::TX_CONSENSUS,
-                          "tx-nameupdate-without-name-input",
+                          "tx-updatename-without-name-input",
                           "Name update has no previous name input");
   const valtype& name = nameOpOut.getOpName ();
 
@@ -208,12 +208,12 @@ CheckNameTransaction (const CTransaction& tx, unsigned nHeight,
     {
       if (!nameOpIn.isAnyUpdate ())
         return state.Invalid (TxValidationResult::TX_CONSENSUS,
-                              "tx-nameupdate-invalid-prev",
+                              "tx-updatename-invalid-prev",
                               "Name input for NAME_UPDATE is not an update");
 
       if (name != nameOpIn.getOpName ())
         return state.Invalid (TxValidationResult::TX_CONSENSUS,
-                              "tx-nameupdate-name-mismatch",
+                              "tx-updatename-name-mismatch",
                               "NAME_UPDATE name mismatch to name input");
 
       /* If the name input is pending, then no further checks with respect
@@ -228,11 +228,11 @@ CheckNameTransaction (const CTransaction& tx, unsigned nHeight,
       CNameData oldName;
       if (!view.GetName (name, oldName))
         return state.Invalid (TxValidationResult::TX_CONSENSUS,
-                              "tx-nameupdate-nonexistant",
+                              "tx-updatename-nonexistant",
                               "NAME_UPDATE name does not exist");
       if (oldName.isExpired (nHeight))
         return state.Invalid (TxValidationResult::TX_CONSENSUS,
-                              "tx-nameupdate-expired",
+                              "tx-updatename-expired",
                               "NAME_UPDATE on an expired name");
       assert (inHeight == oldName.getHeight ());
       assert (tx.vin[nameIn].prevout == oldName.getUpdateOutpoint ());

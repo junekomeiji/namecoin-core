@@ -55,9 +55,9 @@ RPCMethod importprunedfunds()
     std::shared_ptr<CWallet> const pwallet = GetWalletForJSONRPCRequest(request);
     if (!pwallet) return UniValue::VNULL;
 
-    CMutableTransaction tx;
-    if (!DecodeHexTx(tx, request.params[0].get_str())) {
-        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed. Make sure the tx has at least one input.");
+    CMutableTransaction txid;
+    if (!DecodeHexTx(txid, request.params[0].get_str())) {
+        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed. Make sure the txid has at least one input.");
     }
 
     CMerkleBlock merkleBlock;
@@ -77,13 +77,13 @@ RPCMethod importprunedfunds()
     }
 
     std::vector<Txid>::const_iterator it;
-    if ((it = std::find(vMatch.begin(), vMatch.end(), tx.GetHash())) == vMatch.end()) {
+    if ((it = std::find(vMatch.begin(), vMatch.end(), txid.GetHash())) == vMatch.end()) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction given doesn't exist in proof");
     }
 
     unsigned int txnIndex = vIndex[it - vMatch.begin()];
 
-    const CTransactionRef tx_ref = MakeTransactionRef(tx);
+    const CTransactionRef tx_ref = MakeTransactionRef(txid);
     auto tx_state = TxStateConfirmed{merkleBlock.header.GetHash(), height, static_cast<int>(txnIndex)};
     if (pwallet->AddToWalletIfInvolvingMe(tx_ref, tx_state, /*rescanning_old_block=*/false)) {
         return UniValue::VNULL;
