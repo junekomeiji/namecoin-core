@@ -237,7 +237,7 @@ QString BuyNamesPage::name_available(const QString &name) const
     }
 
     UniValue options(UniValue::VOBJ);
-    options.pushKV ("nameEncoding", "hex");
+    options.pushKV ("name_encoding", "hex");
     params.pushKV ("options", options);
 
     const std::string walletURI = "/wallet/" + walletModel->getWalletName().toStdString();
@@ -283,7 +283,7 @@ QString BuyNamesPage::firstupdate(const QString &name, const std::optional<QStri
     }
 
     UniValue options(UniValue::VOBJ);
-    options.pushKV ("nameEncoding", "hex");
+    options.pushKV ("name_encoding", "hex");
 
     if (value)
     {
@@ -297,12 +297,12 @@ QString BuyNamesPage::firstupdate(const QString &name, const std::optional<QStri
             return tr ("Value was invalid ASCII.");
         }
 
-        options.pushKV ("valueEncoding", "hex");
+        options.pushKV ("value_encoding", "hex");
     }
 
     if (transferTo)
     {
-        options.pushKV ("destAddress", transferTo.value().toStdString());
+        options.pushKV ("dest_address", transferTo.value().toStdString());
     }
 
     params.pushKV ("options", options);

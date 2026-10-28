@@ -102,13 +102,13 @@ void DestinationAddressHelper::setOptions (const UniValue& opt)
 {
   RPCTypeCheckObj (opt,
     {
-      {"destAddress", UniValueType (UniValue::VSTR)},
+      {"dest_address", UniValueType (UniValue::VSTR)},
     },
     true, false);
-  if (!opt.exists ("destAddress"))
+  if (!opt.exists ("dest_address"))
     return;
 
-  CTxDestination dest = DecodeDestination (opt["destAddress"].get_str ());
+  CTxDestination dest = DecodeDestination (opt["dest_address"].get_str ());
   if (!IsValidDestination (dest))
     throw JSONRPCError (RPC_INVALID_ADDRESS_OR_KEY, "invalid address");
   overrideDest.reset (new CTxDestination (std::move (dest)));
@@ -138,7 +138,7 @@ void DestinationAddressHelper::finalise ()
 /**
  * Sends a name output to the given name script.  This is the "final" step that
  * is common between name_new, name_firstupdate and name_update.  This method
- * also implements the "sendCoins" option, if included.
+ * also implements the "send_coins" option, if included.
  */
 UniValue
 SendNameOutput (const JSONRPCRequest& request,
@@ -148,7 +148,7 @@ SendNameOutput (const JSONRPCRequest& request,
 {
   RPCTypeCheckObj (opt,
     {
-      {"sendCoins", UniValueType (UniValue::VOBJ)},
+      {"send_coins", UniValueType (UniValue::VOBJ)},
     },
     true, false);
 
@@ -159,15 +159,15 @@ SendNameOutput (const JSONRPCRequest& request,
   std::vector<CRecipient> vecSend;
   vecSend.push_back ({dest, NAME_LOCKED_AMOUNT, false, nameOp});
 
-  if (opt.exists ("sendCoins"))
-    for (const std::string& addr : opt["sendCoins"].getKeys ())
+  if (opt.exists ("send_coins"))
+    for (const std::string& addr : opt["send_coins"].getKeys ())
       {
         const CTxDestination coinDest = DecodeDestination (addr);
         if (!IsValidDestination (coinDest))
           throw JSONRPCError (RPC_INVALID_ADDRESS_OR_KEY,
                               "Invalid address: " + addr);
 
-        const CAmount nAmount = AmountFromValue (opt["sendCoins"][addr]);
+        const CAmount nAmount = AmountFromValue (opt["send_coins"][addr]);
         if (nAmount <= 0)
           throw JSONRPCError (RPC_TYPE_ERROR, "Invalid amount for send");
 
@@ -374,7 +374,7 @@ name_new ()
   optHelp
       .withNameEncoding ()
       .withWriteOptions ()
-      .withArg ("allowExisting", RPCArg::Type::BOOL, "false",
+      .withArg ("allow_existing", RPCArg::Type::BOOL, "false",
                 "If set, then the name_new is sent even if the name exists already");
 
   return RPCMethod ("name_new",
@@ -408,7 +408,7 @@ name_new ()
     options = request.params[1].get_obj ();
   RPCTypeCheckObj (options,
     {
-      {"allowExisting", UniValueType (UniValue::VBOOL)},
+      {"allow_existing", UniValueType (UniValue::VBOOL)},
     },
     true, false);
 
@@ -416,7 +416,7 @@ name_new ()
   if (name.size () > MAX_NAME_LENGTH)
     throw JSONRPCError (RPC_INVALID_PARAMETER, "the name is too long");
 
-  if (!options["allowExisting"].isTrue ())
+  if (!options["allow_existing"].isTrue ())
     {
       LOCK (cs_main);
       CNameData oldData;

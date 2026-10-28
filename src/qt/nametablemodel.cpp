@@ -76,8 +76,8 @@ public:
 
         UniValue params(UniValue::VOBJ);
         UniValue options(UniValue::VOBJ);
-        options.pushKV ("nameEncoding", "hex");
-        options.pushKV ("valueEncoding", "hex");
+        options.pushKV ("name_encoding", "hex");
+        options.pushKV ("value_encoding", "hex");
         params.pushKV ("options", options);
 
         const std::string walletURI = "/wallet/" + parent.walletModel->getWalletName().toStdString();
@@ -571,7 +571,7 @@ QString NameTableModel::update(const QString &name, const std::optional<QString>
     }
 
     UniValue options(UniValue::VOBJ);
-    options.pushKV ("nameEncoding", "hex");
+    options.pushKV ("name_encoding", "hex");
 
     if (value)
     {
@@ -585,12 +585,12 @@ QString NameTableModel::update(const QString &name, const std::optional<QString>
             return tr ("Value was invalid ASCII.");
         }
 
-        options.pushKV ("valueEncoding", "hex");
+        options.pushKV ("value_encoding", "hex");
     }
 
     if (transferTo)
     {
-        options.pushKV ("destAddress", transferTo.value().toStdString());
+        options.pushKV ("dest_address", transferTo.value().toStdString());
     }
 
     params.pushKV ("options", options);

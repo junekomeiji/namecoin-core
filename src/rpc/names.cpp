@@ -80,10 +80,10 @@ getNameInfo (const UniValue& options,
 {
   UniValue obj(UniValue::VOBJ);
   AddEncodedNameToUniv (obj, "name", name,
-                        EncodingFromOptionsJson (options, "nameEncoding",
+                        EncodingFromOptionsJson (options, "name_encoding",
                                                  ConfiguredNameEncoding ()));
   AddEncodedNameToUniv (obj, "value", value,
-                        EncodingFromOptionsJson (options, "valueEncoding",
+                        EncodingFromOptionsJson (options, "value_encoding",
                                                  ConfiguredValueEncoding ()));
   obj.pushKV ("txid", outp.hash.GetHex ());
   obj.pushKV ("vout", static_cast<int> (outp.n));
@@ -178,14 +178,14 @@ DecodeNameValueFromRPCOrThrow (const UniValue& val, const UniValue& opt,
 valtype
 DecodeNameFromRPCOrThrow (const UniValue& val, const UniValue& opt)
 {
-  return DecodeNameValueFromRPCOrThrow (val, opt, "nameEncoding",
+  return DecodeNameValueFromRPCOrThrow (val, opt, "name_encoding",
                                         ConfiguredNameEncoding ());
 }
 
 valtype
 DecodeValueFromRPCOrThrow (const UniValue& val, const UniValue& opt)
 {
-  return DecodeNameValueFromRPCOrThrow (val, opt, "valueEncoding",
+  return DecodeNameValueFromRPCOrThrow (val, opt, "value_encoding",
                                         ConfiguredValueEncoding ());
 }
 
@@ -193,7 +193,7 @@ namespace
 {
 
 /**
- * Decodes the identifier for a name lookup according to the nameEncoding,
+ * Decodes the identifier for a name lookup according to the name_encoding,
  * and also looks up the preimage if we look up by hash.
  */
 valtype
@@ -203,15 +203,15 @@ GetNameForLookup (const UniValue& val, const UniValue& opt)
 
   RPCTypeCheckObj (opt,
     {
-      {"byHash", UniValueType (UniValue::VSTR)},
+      {"by_hash", UniValueType (UniValue::VSTR)},
     },
     true, false);
 
-  if (!opt.exists ("byHash"))
+  if (!opt.exists ("by_hash"))
     return identifier;
 
-  const std::string byHashType = opt["byHash"].get_str ();
-  if (byHashType == "direct")
+  const std::string by_hashType = opt["by_hash"].get_str ();
+  if (by_hashType == "direct")
     return identifier;
 
   if (g_name_hash_index == nullptr)
@@ -219,10 +219,10 @@ GetNameForLookup (const UniValue& val, const UniValue& opt)
   if (!g_name_hash_index->BlockUntilSyncedToCurrentChain ())
     throw std::runtime_error ("The name-hash index is not caught up yet");
 
-  if (byHashType != "sha256d")
+  if (by_hashType != "sha256d")
     {
       std::ostringstream msg;
-      msg << "Invalid value for byHash: " << byHashType;
+      msg << "Invalid value for by_hash: " << by_hashType;
       throw JSONRPCError (RPC_INVALID_PARAMETER, msg.str ());
     }
 
@@ -444,10 +444,10 @@ NameOptionsHelp::withArg (const std::string& name, const RPCArg::Type type,
 NameOptionsHelp&
 NameOptionsHelp::withWriteOptions ()
 {
-  withArg ("destAddress", RPCArg::Type::STR,
+  withArg ("dest_address", RPCArg::Type::STR,
            "The address to send the name output to");
 
-  withArg ("sendCoins", RPCArg::Type::OBJ_USER_KEYS,
+  withArg ("send_coins", RPCArg::Type::OBJ_USER_KEYS,
            "Addresses to which coins should be sent additionally",
            {
               {"address", RPCArg::Type::AMOUNT, RPCArg::Optional::NO,
@@ -461,7 +461,7 @@ NameOptionsHelp::withWriteOptions ()
 NameOptionsHelp&
 NameOptionsHelp::withNameEncoding ()
 {
-  withArg ("nameEncoding", RPCArg::Type::STR,
+  withArg ("name_encoding", RPCArg::Type::STR,
            "Encoding (\"ascii\", \"utf8\" or \"hex\") of the name argument");
   return *this;
 }
@@ -469,7 +469,7 @@ NameOptionsHelp::withNameEncoding ()
 NameOptionsHelp&
 NameOptionsHelp::withValueEncoding ()
 {
-  withArg ("valueEncoding", RPCArg::Type::STR,
+  withArg ("value_encoding", RPCArg::Type::STR,
            "Encoding (\"ascii\", \"utf8\" or \"hex\") of the value argument");
   return *this;
 }
@@ -477,7 +477,7 @@ NameOptionsHelp::withValueEncoding ()
 NameOptionsHelp&
 NameOptionsHelp::withByHash ()
 {
-  withArg ("byHash", RPCArg::Type::STR,
+  withArg ("by_hash", RPCArg::Type::STR,
            "Interpret \"name\" as hash (\"direct\" or \"sha256d\")");
   return *this;
 }
@@ -502,7 +502,7 @@ name_show ()
       .withNameEncoding ()
       .withValueEncoding ()
       .withByHash ()
-      .withArg ("allowExpired", RPCArg::Type::BOOL, "depends on -allowexpired",
+      .withArg ("allow_expired", RPCArg::Type::BOOL, "depends on -allowexpired",
                 "Whether to throw error for expired names");
 
   return RPCMethod ("name_show",
@@ -516,7 +516,7 @@ name_show ()
         .finish (),
       RPCExamples {
           HelpExampleCli ("name_show", "\"myname\"")
-        + HelpExampleCli ("name_show", R"("myname" '{"allowExpired": false}')")
+        + HelpExampleCli ("name_show", R"("myname" '{"allow_expired": false}')")
         + HelpExampleRpc ("name_show", "\"myname\"")
       },
       [&] (const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
@@ -534,13 +534,13 @@ name_show ()
   /* Parse and interpret the name_show-specific options.  */
   RPCTypeCheckObj(options,
     {
-      {"allowExpired", UniValueType(UniValue::VBOOL)},
+      {"allow_expired", UniValueType(UniValue::VBOOL)},
     },
     true, false);
 
   bool allow_expired = gArgs.GetBoolArg("-allowexpired", DEFAULT_ALLOWEXPIRED);
-  if (options.exists("allowExpired"))
-    allow_expired = options["allowExpired"].get_bool();
+  if (options.exists("allow_expired"))
+    allow_expired = options["allow_expired"].get_bool();
 
   const valtype name = GetNameForLookup (request.params[0], options);
 
@@ -656,9 +656,9 @@ name_scan ()
   optHelp
       .withNameEncoding ()
       .withValueEncoding ()
-      .withArg ("minConf", RPCArg::Type::NUM, "1",
+      .withArg ("min_conf", RPCArg::Type::NUM, "1",
                 "Minimum number of confirmations")
-      .withArg ("maxConf", RPCArg::Type::NUM,
+      .withArg ("max_conf", RPCArg::Type::NUM,
                 "Maximum number of confirmations")
       .withArg ("prefix", RPCArg::Type::STR,
                 "Filter for names with the given prefix")
@@ -708,26 +708,26 @@ name_scan ()
   /* Parse and interpret the name_scan-specific options.  */
   RPCTypeCheckObj (options,
     {
-      {"minConf", UniValueType (UniValue::VNUM)},
-      {"maxConf", UniValueType (UniValue::VNUM)},
+      {"min_conf", UniValueType (UniValue::VNUM)},
+      {"max_conf", UniValueType (UniValue::VNUM)},
       {"prefix", UniValueType (UniValue::VSTR)},
       {"regexp", UniValueType (UniValue::VSTR)},
     },
     true, false);
 
-  int minConf = 1;
-  if (options.exists ("minConf"))
-    minConf = options["minConf"].getInt<int> ();
-  if (minConf < 1)
-    throw JSONRPCError (RPC_INVALID_PARAMETER, "minConf must be >= 1");
+  int min_conf = 1;
+  if (options.exists ("min_conf"))
+    min_conf = options["min_conf"].getInt<int> ();
+  if (min_conf < 1)
+    throw JSONRPCError (RPC_INVALID_PARAMETER, "min_conf must be >= 1");
 
-  int maxConf = -1;
-  if (options.exists ("maxConf"))
+  int max_conf = -1;
+  if (options.exists ("max_conf"))
     {
-      maxConf = options["maxConf"].getInt<int> ();
-      if (maxConf < 0)
+      max_conf = options["max_conf"].getInt<int> ();
+      if (max_conf < 0)
         throw JSONRPCError (RPC_INVALID_PARAMETER,
-                            "maxConf must not be negative");
+                            "max_conf must not be negative");
     }
 
   valtype prefix;
@@ -750,10 +750,10 @@ name_scan ()
   MaybeWalletForRequest wallet(request);
   LOCK2 (wallet.getLock (), cs_main);
 
-  const int maxHeight = chainman.ActiveHeight () - minConf + 1;
+  const int maxHeight = chainman.ActiveHeight () - min_conf + 1;
   int minHeight = -1;
-  if (maxConf >= 0)
-    minHeight = chainman.ActiveHeight () - maxConf + 1;
+  if (max_conf >= 0)
+    minHeight = chainman.ActiveHeight () - max_conf + 1;
 
   valtype name;
   CNameData data;
