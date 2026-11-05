@@ -376,7 +376,7 @@ NameInfoHelp::NameInfoHelp ()
   withField ({RPCResult::Type::STR, "value_error", optional,
               "replaces \"value\" in case there is an error"});
 
-  withField ({RPCResult::Type::STR_HEX, "txid", "the name's last update tx"});
+  withField ({RPCResult::Type::STR_HEX, "txid", "the name's last update txid"});
   withField ({RPCResult::Type::NUM, "vout",
               "the index of the name output in the last update"});
   withField ({RPCResult::Type::STR, "address", "the address holding the name"});
@@ -843,13 +843,13 @@ name_pending ()
   UniValue arr(UniValue::VARR);
   for (const CTxMemPoolEntry& entry : mempool.entryAll ())
     {
-      const auto& tx = entry.GetTx ();
-      if (!tx.IsNamecoin ())
+      const auto& txid = entry.GetTx ();
+      if (!txid.IsNamecoin ())
         continue;
 
-      for (size_t n = 0; n < tx.vout.size (); ++n)
+      for (size_t n = 0; n < txid.vout.size (); ++n)
         {
-          const auto& txOut = tx.vout[n];
+          const auto& txOut = txid.vout[n];
           const CNameScript op(txOut.scriptPubKey);
           if (!op.isNameOp () || !op.isAnyUpdate ())
             continue;
@@ -858,7 +858,7 @@ name_pending ()
 
           UniValue obj = getNameInfo (options,
                                       op.getOpName (), op.getOpValue (),
-                                      COutPoint (tx.GetHash (), n),
+                                      COutPoint (txid.GetHash (), n),
                                       op.getAddress ());
           addOwnershipInfo (op.getAddress (), wallet, obj);
           switch (op.getNameOp ())
@@ -914,7 +914,7 @@ PerformNameRawtx (const unsigned nOut, const UniValue& nameOp,
 
   /* namerawtransaction does not have an options argument.  This would just
      make the already long list of arguments longer.  Instead of using
-     namerawtransaction, namecoin-tx can be used anyway to create name
+     namerawtransaction, namecoin-txid can be used anyway to create name
      operations with arbitrary hex data.  */
   const UniValue NO_OPTIONS(UniValue::VOBJ);
 
@@ -1018,10 +1018,10 @@ namerawtransaction ()
           },
       },
       RPCExamples {
-          HelpExampleCli ("namerawtransaction", R"("raw tx hex" 1 "{\"op\":\"name_new\",\"name\":\"my-name\")")
-        + HelpExampleCli ("namerawtransaction", R"("raw tx hex" 1 "{\"op\":\"name_firstupdate\",\"name\":\"my-name\",\"value\":\"new value\",\"salt\":\"00112233\")")
-        + HelpExampleCli ("namerawtransaction", R"("raw tx hex" 1 "{\"op\":\"name_update\",\"name\":\"my-name\",\"value\":\"new value\")")
-        + HelpExampleRpc ("namerawtransaction", R"("raw tx hex", 1, {"op":"name_update","name":"my-name","value":"new value"})")
+          HelpExampleCli ("namerawtransaction", R"("raw txid hex" 1 "{\"op\":\"name_new\",\"name\":\"my-name\")")
+        + HelpExampleCli ("namerawtransaction", R"("raw txid hex" 1 "{\"op\":\"name_firstupdate\",\"name\":\"my-name\",\"value\":\"new value\",\"salt\":\"00112233\")")
+        + HelpExampleCli ("namerawtransaction", R"("raw txid hex" 1 "{\"op\":\"name_update\",\"name\":\"my-name\",\"value\":\"new value\")")
+        + HelpExampleRpc ("namerawtransaction", R"("raw txid hex", 1, {"op":"name_update","name":"my-name","value":"new value"})")
       },
       [&] (const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
