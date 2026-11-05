@@ -354,7 +354,7 @@ const RPCResult NameOpResult{RPCResult::Type::OBJ, "nameOp", optional,
     {
       {RPCResult::Type::STR, "op", "The type of operation"},
       {RPCResult::Type::STR_HEX, "hash", optional, "Hash value for name_new"},
-      {RPCResult::Type::STR_HEX, "rand", optional, "Seed value for name_firstupdate"},
+      {RPCResult::Type::STR_HEX, "salt", optional, "Seed value for name_firstupdate"},
       {RPCResult::Type::STR, "name", optional, "Name for updates"},
       {RPCResult::Type::STR, "name_error", optional, "Encoding error for the name, if any"},
       {RPCResult::Type::STR, "name_encoding", optional, "Encoding of the name"},
@@ -892,7 +892,7 @@ namespace
  * CMutableTransaction.  This is used to share the code between the two
  * RPC methods.
  *
- * If a name_new is created and a rand value chosen, it will be placed
+ * If a name_new is created and a salt value chosen, it will be placed
  * into the JSON output "result" already.
  */
 void
@@ -923,29 +923,29 @@ PerformNameRawtx (const unsigned nOut, const UniValue& nameOp,
       RPCTypeCheckObj (nameOp,
         {
           {"name", UniValueType (UniValue::VSTR)},
-          {"rand", UniValueType (UniValue::VSTR)},
+          {"salt", UniValueType (UniValue::VSTR)},
         },
         true);
 
-      valtype rand;
-      if (nameOp.exists ("rand"))
+      valtype salt;
+      if (nameOp.exists ("salt"))
         {
-          const std::string randStr = nameOp.find_value ("rand").get_str ();
+          const std::string randStr = nameOp.find_value ("salt").get_str ();
           if (!IsHex (randStr))
-            throw JSONRPCError (RPC_DESERIALIZATION_ERROR, "rand must be hex");
-          rand = ParseHex (randStr);
+            throw JSONRPCError (RPC_DESERIALIZATION_ERROR, "salt must be hex");
+          salt = ParseHex (randStr);
         }
       else
         {
-          rand.resize (20);
-          GetRandBytes (rand);
+          salt.resize (20);
+          GetRandBytes (salt);
         }
 
       const valtype name
           = DecodeNameFromRPCOrThrow (nameOp.find_value ("name"), NO_OPTIONS);
 
-      script = CNameScript::buildNameNew (script, name, rand);
-      result.pushKV ("rand", HexStr (rand));
+      script = CNameScript::buildNameNew (script, name, salt);
+      result.pushKV ("salt", HexStr (salt));
     }
   else if (op == "name_firstupdate")
     {
@@ -953,14 +953,14 @@ PerformNameRawtx (const unsigned nOut, const UniValue& nameOp,
         {
           {"name", UniValueType (UniValue::VSTR)},
           {"value", UniValueType (UniValue::VSTR)},
-          {"rand", UniValueType (UniValue::VSTR)},
+          {"salt", UniValueType (UniValue::VSTR)},
         }
       );
 
-      const std::string randStr = nameOp.find_value ("rand").get_str ();
+      const std::string randStr = nameOp.find_value ("salt").get_str ();
       if (!IsHex (randStr))
-        throw JSONRPCError (RPC_DESERIALIZATION_ERROR, "rand must be hex");
-      const valtype rand = ParseHex (randStr);
+        throw JSONRPCError (RPC_DESERIALIZATION_ERROR, "salt must be hex");
+      const valtype salt = ParseHex (randStr);
 
       const valtype name
           = DecodeNameFromRPCOrThrow (nameOp.find_value ("name"), NO_OPTIONS);
@@ -968,7 +968,7 @@ PerformNameRawtx (const unsigned nOut, const UniValue& nameOp,
           = DecodeValueFromRPCOrThrow (nameOp.find_value ("value"),
                                        NO_OPTIONS);
 
-      script = CNameScript::buildNameFirstupdate (script, name, value, rand);
+      script = CNameScript::buildNameFirstupdate (script, name, value, salt);
     }
   else if (op == "name_update")
     {
@@ -1007,19 +1007,19 @@ namerawtransaction ()
                   {"op", RPCArg::Type::STR, RPCArg::Optional::NO, "The operation to perform, can be \"name_new\", \"name_firstupdate\" and \"name_update\""},
                   {"name", RPCArg::Type::STR, RPCArg::Optional::NO, "The name to operate on"},
                   {"value", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "The new value for the name"},
-                  {"rand", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "The nonce value to use for registrations"},
+                  {"salt", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "The nonce value to use for registrations"},
               }
           },
       },
       RPCResult {RPCResult::Type::OBJ, "", "",
           {
               {RPCResult::Type::STR_HEX, "hex", "Hex string of the updated transaction"},
-              {RPCResult::Type::STR_HEX, "rand", /* optional */ true, "If this is a name_new, the nonce used to create it"},
+              {RPCResult::Type::STR_HEX, "salt", /* optional */ true, "If this is a name_new, the nonce used to create it"},
           },
       },
       RPCExamples {
           HelpExampleCli ("namerawtransaction", R"("raw tx hex" 1 "{\"op\":\"name_new\",\"name\":\"my-name\")")
-        + HelpExampleCli ("namerawtransaction", R"("raw tx hex" 1 "{\"op\":\"name_firstupdate\",\"name\":\"my-name\",\"value\":\"new value\",\"rand\":\"00112233\")")
+        + HelpExampleCli ("namerawtransaction", R"("raw tx hex" 1 "{\"op\":\"name_firstupdate\",\"name\":\"my-name\",\"value\":\"new value\",\"salt\":\"00112233\")")
         + HelpExampleCli ("namerawtransaction", R"("raw tx hex" 1 "{\"op\":\"name_update\",\"name\":\"my-name\",\"value\":\"new value\")")
         + HelpExampleRpc ("namerawtransaction", R"("raw tx hex", 1, {"op":"name_update","name":"my-name","value":"new value"})")
       },
@@ -1054,19 +1054,19 @@ namepsbt ()
                   {"op", RPCArg::Type::STR, RPCArg::Optional::NO, "The operation to perform, can be \"name_new\", \"name_firstupdate\" and \"name_update\""},
                   {"name", RPCArg::Type::STR, RPCArg::Optional::NO, "The name to operate on"},
                   {"value", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "The new value for the name"},
-                  {"rand", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "The nonce value to use for registrations"},
+                  {"salt", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "The nonce value to use for registrations"},
               }
           },
       },
       RPCResult {RPCResult::Type::OBJ, "", "",
           {
               {RPCResult::Type::STR_HEX, "psbt", "The serialised, updated PSBT"},
-              {RPCResult::Type::STR_HEX, "rand", /* optional */ true, "If this is a name_new, the nonce used to create it"},
+              {RPCResult::Type::STR_HEX, "salt", /* optional */ true, "If this is a name_new, the nonce used to create it"},
           },
       },
       RPCExamples {
           HelpExampleCli ("namepsbt", R"("psbt" 1 "{\"op\":\"name_new\",\"name\":\"my-name\")")
-        + HelpExampleCli ("namepsbt", R"("psbt" 1 "{\"op\":\"name_firstupdate\",\"name\":\"my-name\",\"value\":\"new value\",\"rand\":\"00112233\")")
+        + HelpExampleCli ("namepsbt", R"("psbt" 1 "{\"op\":\"name_firstupdate\",\"name\":\"my-name\",\"value\":\"new value\",\"salt\":\"00112233\")")
         + HelpExampleCli ("namepsbt", R"("psbt" 1 "{\"op\":\"name_update\",\"name\":\"my-name\",\"value\":\"new value\")")
         + HelpExampleRpc ("namepsbt", R"("psbt", 1, {"op":"name_update","name":"my-name","value":"new value"})")
       },
