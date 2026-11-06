@@ -582,7 +582,7 @@ getnamehistory ()
       .withValueEncoding ()
       .withByHash ();
 
-  return RPCMethod ("getnamehistory",
+  return RPCMethod {"getnamehistory",
       "Looks up the current and all past data for the given name.  -namehistory must be enabled.\n",
       {
           {"name", RPCArg::Type::STR, RPCArg::Optional::NO, "The name to query for"},
@@ -644,7 +644,7 @@ getnamehistory ()
 
   return res;
 }
-  );
+    };
 }
 
 /* ************************************************************************** */
@@ -806,7 +806,7 @@ getmempoolname ()
       .withNameEncoding ()
       .withValueEncoding ();
 
-  return RPCMethod ("getmempoolname",
+  return RPCMethod {"getmempoolname",
       "Lists unconfirmed name operations in the mempool.\n"
       "\nIf a name is given, only check for operations on this name.\n",
       {
@@ -879,7 +879,7 @@ getmempoolname ()
 
   return arr;
 }
-  );
+    };
 }
 
 /* ************************************************************************** */
@@ -1099,16 +1099,16 @@ namepsbt ()
 /* ************************************************************************** */
 
 RPCMethod
-name_checkdb ()
+verifynamedb ()
 {
-  return RPCMethod ("name_checkdb",
+  return RPCMethod ("verifynamedb",
       "Validates the name DB's consistency.\n"
       "\nRoughly between blocks 139,000 and 180,000, this call is expected to fail due to the historic 'name stealing' bug.\n",
       {},
       RPCResult {RPCResult::Type::BOOL, "", "whether the state is valid"},
       RPCExamples {
-          HelpExampleCli ("name_checkdb", "")
-        + HelpExampleRpc ("name_checkdb", "")
+          HelpExampleCli ("verifynamedb", "")
+        + HelpExampleRpc ("verifynamedb", "")
       },
       [&] (const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
@@ -1136,7 +1136,7 @@ static const CRPCCommand commands[] =
     { "names",               &getnamehistory,            },
     { "names",               &scannameset,               },
     { "names",               &getmempoolname,            },
-    { "names",               &name_checkdb,            },
+    { "names",               &verifynamedb,            },
     { "rawtransactions",     &namerawtransaction,      },
     { "rawtransactions",     &namepsbt,                },
 };
