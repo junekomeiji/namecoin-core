@@ -505,70 +505,70 @@ getname ()
       .withArg ("allow_expired", RPCArg::Type::BOOL, "depends on -allowexpired",
                 "Whether to throw error for expired names");
 
-  return RPCMethod ("getname",
+  return RPCMethod {"getname",
       "Looks up the current data for the given name.  Fails if the name doesn't exist.\n",
       {
           {"name", RPCArg::Type::STR, RPCArg::Optional::NO, "The name to query for"},
-          optHelp.buildRpcArg (),
-      },
-      NameInfoHelp ()
-        .withExpiration ()
-        .finish (),
-      RPCExamples {
-          HelpExampleCli ("getname", "\"myname\"")
-        + HelpExampleCli ("getname", R"("myname" '{"allow_expired": false}')")
-        + HelpExampleRpc ("getname", "\"myname\"")
-      },
-      [&] (const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
-{
-  auto& chainman = EnsureChainman (EnsureAnyNodeContext (request));
+            optHelp.buildRpcArg (),
+          },
+            NameInfoHelp ()
+                .withExpiration ()
+                .finish (),
+            RPCExamples {
+                HelpExampleCli ("getname", "\"myname\"")
+                + HelpExampleCli ("getname", R"("myname" '{"allow_expired": false}')")
+                + HelpExampleRpc ("getname", "\"myname\"")
+            },
+            [&] (const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
+        {
+        auto& chainman = EnsureChainman (EnsureAnyNodeContext (request));
 
-  if (chainman.IsInitialBlockDownload ())
-    throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD,
-                       "Namecoin is downloading blocks...");
+        if (chainman.IsInitialBlockDownload ())
+            throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD,
+                            "Namecoin is downloading blocks...");
 
-  UniValue options(UniValue::VOBJ);
-  if (request.params.size () >= 2)
-    options = request.params[1].get_obj ();
+        UniValue options(UniValue::VOBJ);
+        if (request.params.size () >= 2)
+            options = request.params[1].get_obj ();
 
-  /* Parse and interpret the getname-specific options.  */
-  RPCTypeCheckObj(options,
-    {
-      {"allow_expired", UniValueType(UniValue::VBOOL)},
-    },
-    true, false);
+        /* Parse and interpret the getname-specific options.  */
+        RPCTypeCheckObj(options,
+            {
+            {"allow_expired", UniValueType(UniValue::VBOOL)},
+            },
+            true, false);
 
-  bool allow_expired = gArgs.GetBoolArg("-allowexpired", DEFAULT_ALLOWEXPIRED);
-  if (options.exists("allow_expired"))
-    allow_expired = options["allow_expired"].get_bool();
+        bool allow_expired = gArgs.GetBoolArg("-allowexpired", DEFAULT_ALLOWEXPIRED);
+        if (options.exists("allow_expired"))
+            allow_expired = options["allow_expired"].get_bool();
 
-  const valtype name = GetNameForLookup (request.params[0], options);
+        const valtype name = GetNameForLookup (request.params[0], options);
 
-  CNameData data;
-  {
-    LOCK (cs_main);
-    if (!chainman.ActiveChainstate ().CoinsTip ().GetName (name, data))
-      {
-        std::ostringstream msg;
-        msg << "name never existed: " << EncodeNameForMessage (name);
-        throw JSONRPCError (RPC_WALLET_ERROR, msg.str ());
-      }
-  }
+        CNameData data;
+        {
+            LOCK (cs_main);
+            if (!chainman.ActiveChainstate ().CoinsTip ().GetName (name, data))
+            {
+                std::ostringstream msg;
+                msg << "name never existed: " << EncodeNameForMessage (name);
+                throw JSONRPCError (RPC_WALLET_ERROR, msg.str ());
+            }
+        }
 
-  MaybeWalletForRequest wallet(request);
-  LOCK2 (wallet.getLock (), cs_main);
-  UniValue name_object = getNameInfo(chainman, options, name, data, wallet);
-  assert(!name_object["expired"].isNull());
-  const bool is_expired = name_object["expired"].get_bool();
-  if (is_expired && !allow_expired)
-    {
-      std::ostringstream msg;
-      msg << "name expired: " << EncodeNameForMessage(name);
-      throw JSONRPCError(RPC_WALLET_ERROR, msg.str());
-    }
-  return name_object;
-}
-  );
+        MaybeWalletForRequest wallet(request);
+        LOCK2 (wallet.getLock (), cs_main);
+        UniValue name_object = getNameInfo(chainman, options, name, data, wallet);
+        assert(!name_object["expired"].isNull());
+        const bool is_expired = name_object["expired"].get_bool();
+        if (is_expired && !allow_expired)
+            {
+            std::ostringstream msg;
+            msg << "name expired: " << EncodeNameForMessage(name);
+            throw JSONRPCError(RPC_WALLET_ERROR, msg.str());
+            }
+        return name_object;
+        }
+    };
 }
 
 /* ************************************************************************** */
