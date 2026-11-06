@@ -222,7 +222,7 @@ void BuyNamesPage::onRegisterNameAction()
 QString BuyNamesPage::name_available(const QString &name) const
 {
     const std::string strName = name.toStdString();
-    LogDebug(BCLog::QT, "wallet attempting name_show: name=%s\n", strName);
+    LogDebug(BCLog::QT, "wallet attempting getname: name=%s\n", strName);
 
     UniValue params(UniValue::VOBJ);
 
@@ -244,7 +244,7 @@ QString BuyNamesPage::name_available(const QString &name) const
 
     try
     {
-        walletModel->node().executeRpc("name_show", params, walletURI);
+        walletModel->node().executeRpc("getname", params, walletURI);
     }
     catch (const UniValue& e)
     {
@@ -258,7 +258,7 @@ QString BuyNamesPage::name_available(const QString &name) const
 
         const UniValue message = e.find_value("message");
         const std::string errorStr = message.get_str();
-        LogDebug(BCLog::QT, "name_show error: %s\n", errorStr);
+        LogDebug(BCLog::QT, "getname error: %s\n", errorStr);
         return QString::fromStdString(errorStr);
     }
 

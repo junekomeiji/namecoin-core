@@ -108,7 +108,7 @@ public:
   }
 
   /**
-   * Builds a name_update script based on the given name and value.
+   * Builds a updatename script based on the given name and value.
    */
   static CScript
   UpdateScript (const CScript& addr, const std::string& nm,
@@ -287,7 +287,7 @@ BOOST_FIXTURE_TEST_CASE (registername, NameMempoolTestSetup)
   BOOST_CHECK (mempool.checkNameOps (tx2));
 }
 
-BOOST_FIXTURE_TEST_CASE (name_update, NameMempoolTestSetup)
+BOOST_FIXTURE_TEST_CASE (updatename, NameMempoolTestSetup)
 {
   const auto tx1 = Tx (UpdateScript (ADDR, "foo", "x"));
   const auto tx2 = Tx (UpdateScript (ADDR, "foo", "y"));

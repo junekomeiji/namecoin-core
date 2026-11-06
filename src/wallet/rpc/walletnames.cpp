@@ -137,7 +137,7 @@ void DestinationAddressHelper::finalise ()
 
 /**
  * Sends a name output to the given name script.  This is the "final" step that
- * is common between preregistername, registername and name_update.  This method
+ * is common between preregistername, registername and updatename.  This method
  * also implements the "send_coins" option, if included.
  */
 UniValue
@@ -182,14 +182,14 @@ SendNameOutput (const JSONRPCRequest& request,
 /* ************************************************************************** */
 
 RPCMethod
-name_list ()
+listnames ()
 {
   NameOptionsHelp optHelp;
   optHelp
       .withNameEncoding ()
       .withValueEncoding ();
 
-  return RPCMethod ("name_list",
+  return RPCMethod ("listnames",
       "Shows the status of all names in the wallet.\n",
       {
           {"name", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Only include this name"},
@@ -203,9 +203,9 @@ name_list ()
           }
       },
       RPCExamples {
-          HelpExampleCli ("name_list", "")
-        + HelpExampleCli ("name_list", "\"myname\"")
-        + HelpExampleRpc ("name_list", "")
+          HelpExampleCli ("listnames", "")
+        + HelpExampleCli ("listnames", "\"myname\"")
+        + HelpExampleRpc ("listnames", "")
       },
       [&] (const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
@@ -611,7 +611,7 @@ registername ()
     }
   else
     {
-      // Code slightly duplicates name_scan, but not enough to be able to refactor.
+      // Code slightly duplicates scannameset, but not enough to be able to refactor.
       /* Make sure the results are valid at least up to the most recent block
          the user could have gotten from another RPC command prior to now.  */
       pwallet->BlockUntilSyncedToCurrentChain ();
@@ -720,7 +720,7 @@ registername ()
 /* ************************************************************************** */
 
 RPCMethod
-name_update ()
+updatename ()
 {
   NameOptionsHelp optHelp;
   optHelp
@@ -728,7 +728,7 @@ name_update ()
       .withValueEncoding ()
       .withWriteOptions ();
 
-  return RPCMethod ("name_update",
+  return RPCMethod ("updatename",
       "Updates a name and possibly transfers it."
           + HELP_REQUIRING_PASSPHRASE,
       {
@@ -738,8 +738,8 @@ name_update ()
       },
       RPCResult {RPCResult::Type::STR_HEX, "", "the transaction ID"},
       RPCExamples {
-          HelpExampleCli ("name_update", "\"myname\", \"new-value\"")
-        + HelpExampleRpc ("name_update", "\"myname\", \"new-value\"")
+          HelpExampleCli ("updatename", "\"myname\", \"new-value\"")
+        + HelpExampleRpc ("updatename", "\"myname\", \"new-value\"")
       },
       [&] (const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
@@ -773,7 +773,7 @@ name_update ()
      are, then we build upon the last one to get a valid chain.  If there
      are none, then we look up the last outpoint from the name database
      instead. */
-  // TODO: Use name_show for this instead.
+  // TODO: Use getname for this instead.
 
   const unsigned chainLimit = gArgs.GetIntArg ("-limitnamechains",
                                                DEFAULT_NAME_CHAIN_LIMIT);

@@ -797,7 +797,7 @@ BOOST_AUTO_TEST_CASE (registername_salt_length)
 
 /* ************************************************************************** */
 
-BOOST_AUTO_TEST_CASE (name_updates_undo)
+BOOST_AUTO_TEST_CASE (updatenames_undo)
 {
   /* Enable name history to test this on the go.  */
   fNameHistory = true;

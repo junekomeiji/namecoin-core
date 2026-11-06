@@ -572,7 +572,7 @@ UniValue NameOpToUniv (const CNameScript& nameOp)
         break;
 
       case OP_NAME_UPDATE:
-        result.pushKV ("op", "name_update");
+        result.pushKV ("op", "updatename");
         AddEncodedNameToUniv (result, "name", nameOp.getOpName (),
                               ConfiguredNameEncoding ());
         AddEncodedNameToUniv (result, "value", nameOp.getOpValue (),

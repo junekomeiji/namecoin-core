@@ -1120,10 +1120,10 @@ RPCMethod abortrescan();
 RPCMethod getauxblock();
 
 // name
-RPCMethod name_list();
+RPCMethod listnames();
 RPCMethod preregistername();
 RPCMethod registername();
-RPCMethod name_update();
+RPCMethod updatename();
 RPCMethod queuerawtransaction();
 RPCMethod dequeuetransaction();
 RPCMethod listqueuedtransactions();
@@ -1199,10 +1199,10 @@ std::span<const CRPCCommand> GetWalletRPCCommands()
         {"mining", &getauxblock},
 
         // Name-related wallet calls.
-        {"names", &name_list},
+        {"names", &listnames},
         {"names", &preregistername},
         {"names", &registername},
-        {"names", &name_update},
+        {"names", &updatename},
         {"names", &queuerawtransaction},
         {"names", &dequeuetransaction},
         {"names", &listqueuedtransactions},

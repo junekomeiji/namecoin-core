@@ -268,7 +268,7 @@ Result CreateRateBumpTransaction(CWallet& wallet, const Txid& txid, const CCoinC
         } else {
             CRecipient recipient = {dest, output.nValue, false};
             // Preserve name operation script prefix (e.g., preregistername,
-            // registername, name_update) so that the replacement
+            // registername, updatename) so that the replacement
             // transaction retains the Namecoin name operation.
             const CNameScript nameOp(output.scriptPubKey);
             if (nameOp.isNameOp()) {
