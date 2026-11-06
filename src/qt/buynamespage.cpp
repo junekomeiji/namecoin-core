@@ -268,7 +268,7 @@ QString BuyNamesPage::name_available(const QString &name) const
 QString BuyNamesPage::firstupdate(const QString &name, const std::optional<QString> &value, const std::optional<QString> &transferTo) const
 {
     const std::string strName = name.toStdString();
-    LogDebug(BCLog::QT, "wallet attempting name_firstupdate: name=%s\n", strName);
+    LogDebug(BCLog::QT, "wallet attempting registername: name=%s\n", strName);
 
     UniValue params(UniValue::VOBJ);
 
@@ -310,12 +310,12 @@ QString BuyNamesPage::firstupdate(const QString &name, const std::optional<QStri
     const std::string walletURI = "/wallet/" + walletModel->getWalletName().toStdString();
 
     try {
-        walletModel->node().executeRpc("name_firstupdate", params, walletURI);
+        walletModel->node().executeRpc("registername", params, walletURI);
     }
     catch (const UniValue& e) {
         const UniValue message = e.find_value("message");
         const std::string errorStr = message.get_str();
-        LogDebug(BCLog::QT, "name_firstupdate error: %s\n", errorStr);
+        LogDebug(BCLog::QT, "registername error: %s\n", errorStr);
         return QString::fromStdString(errorStr);
     }
     return tr ("");

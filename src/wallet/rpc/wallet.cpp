@@ -1121,8 +1121,8 @@ RPCMethod getauxblock();
 
 // name
 RPCMethod name_list();
-RPCMethod name_new();
-RPCMethod name_firstupdate();
+RPCMethod preregistername();
+RPCMethod registername();
 RPCMethod name_update();
 RPCMethod queuerawtransaction();
 RPCMethod dequeuetransaction();
@@ -1200,8 +1200,8 @@ std::span<const CRPCCommand> GetWalletRPCCommands()
 
         // Name-related wallet calls.
         {"names", &name_list},
-        {"names", &name_new},
-        {"names", &name_firstupdate},
+        {"names", &preregistername},
+        {"names", &registername},
         {"names", &name_update},
         {"names", &queuerawtransaction},
         {"names", &dequeuetransaction},

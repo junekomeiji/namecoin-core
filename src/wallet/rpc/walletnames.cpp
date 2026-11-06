@@ -137,7 +137,7 @@ void DestinationAddressHelper::finalise ()
 
 /**
  * Sends a name output to the given name script.  This is the "final" step that
- * is common between name_new, name_firstupdate and name_update.  This method
+ * is common between preregistername, registername and name_update.  This method
  * also implements the "send_coins" option, if included.
  */
 UniValue
@@ -297,7 +297,7 @@ name_list ()
 
 /**
  * Generate a salt using HKDF for a given name + private key combination.
- * Indirectly used in name_new and name_firstupdate.
+ * Indirectly used in preregistername and registername.
  * Refactored out to make testing easier.
  * @return True on success, false otherwise
  */
@@ -321,7 +321,7 @@ namespace
 
 /**
  * Generate a salt using HKDF for a given name + txout combination.
- * Used in name_new and name_firstupdate.
+ * Used in preregistername and registername.
  * @return True on success, false otherwise
  */
 bool
@@ -368,17 +368,17 @@ saltMatchesHash(const valtype& name, const valtype& rand, const valtype& expecte
 /* ************************************************************************** */
 
 RPCMethod
-name_new ()
+preregistername ()
 {
   NameOptionsHelp optHelp;
   optHelp
       .withNameEncoding ()
       .withWriteOptions ()
       .withArg ("allow_existing", RPCArg::Type::BOOL, "false",
-                "If set, then the name_new is sent even if the name exists already");
+                "If set, then the preregistername is sent even if the name exists already");
 
-  return RPCMethod ("name_new",
-      "Starts registration of the given name.  Must be followed up with name_firstupdate to finish the registration."
+  return RPCMethod ("preregistername",
+      "Starts registration of the given name.  Must be followed up with registername to finish the registration."
           + HELP_REQUIRING_PASSPHRASE,
       {
           {"name", RPCArg::Type::STR, RPCArg::Optional::NO, "The name to register"},
@@ -386,13 +386,13 @@ name_new ()
       },
       RPCResult {RPCResult::Type::ARR_FIXED, "", "",
           {
-              {RPCResult::Type::STR_HEX, "txid", "the txid, required for name_firstupdate"},
-              {RPCResult::Type::STR_HEX, "rand", "random value, for name_firstupdate"},
+              {RPCResult::Type::STR_HEX, "txid", "the txid, required for registername"},
+              {RPCResult::Type::STR_HEX, "rand", "random value, for registername"},
           },
       },
       RPCExamples {
-          HelpExampleCli ("name_new", "\"myname\"")
-        + HelpExampleRpc ("name_new", "\"myname\"")
+          HelpExampleCli ("preregistername", "\"myname\"")
+        + HelpExampleRpc ("preregistername", "\"myname\"")
       },
       [&] (const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
@@ -452,7 +452,7 @@ name_new ()
 
   const std::string randStr = HexStr (rand);
   const std::string txid = txidVal.get_str ();
-  LogInfo ("name_new: name=%s, rand=%s, tx=%s\n",
+  LogInfo ("preregistername: name=%s, rand=%s, tx=%s\n",
            EncodeNameForMessage (name), randStr.c_str (), txid.c_str ());
 
   UniValue res(UniValue::VARR);
@@ -471,7 +471,7 @@ namespace
 
 /**
  * Helper routine to fetch the name output of a previous transaction.  This
- * is required for name_firstupdate.
+ * is required for registername.
  * @param txid Previous transaction ID.
  * @param txOut Set to the corresponding output.
  * @param txIn Set to the CTxIn to include in the new tx.
@@ -515,7 +515,7 @@ getNamePrevout (Chainstate& chainState, const Txid& txid,
 }  // anonymous namespace
 
 RPCMethod
-name_firstupdate ()
+registername ()
 {
   /* There is an undocumented sixth argument that can be used to disable
      the check for already existing names here (it will still be checked
@@ -529,21 +529,21 @@ name_firstupdate ()
       .withValueEncoding ()
       .withWriteOptions ();
 
-  return RPCMethod ("name_firstupdate",
-            "Finishes the registration of a name.  Depends on name_new being already issued."
+  return RPCMethod ("registername",
+            "Finishes the registration of a name.  Depends on preregistername being already issued."
                 + HELP_REQUIRING_PASSPHRASE,
             {
                 {"name", RPCArg::Type::STR, RPCArg::Optional::NO, "The name to register"},
-                {"rand", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "The rand value of name_new"},
-                {"tx", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "The name_new txid"},
+                {"rand", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "The rand value of preregistername"},
+                {"tx", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "The preregistername txid"},
                 {"value", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Value for the name"},
                 optHelp.buildRpcArg (),
                 {"allow_active", RPCArg::Type::BOOL, RPCArg::Optional::OMITTED, "Disable check for the name being active"},
             },
             RPCResult {RPCResult::Type::STR_HEX, "", "the transaction ID"},
             RPCExamples {
-                HelpExampleCli ("name_firstupdate", "\"myname\", \"555844f2db9c7f4b25da6cb8277596de45021ef2\" \"a77ceb22aa03304b7de64ec43328974aeaca211c37dd29dcce4ae461bb80ca84\", \"my-value\"")
-              + HelpExampleRpc ("name_firstupdate", "\"myname\", \"555844f2db9c7f4b25da6cb8277596de45021ef2\", \"a77ceb22aa03304b7de64ec43328974aeaca211c37dd29dcce4ae461bb80ca84\", \"my-value\"")
+                HelpExampleCli ("registername", "\"myname\", \"555844f2db9c7f4b25da6cb8277596de45021ef2\" \"a77ceb22aa03304b7de64ec43328974aeaca211c37dd29dcce4ae461bb80ca84\", \"my-value\"")
+              + HelpExampleRpc ("registername", "\"myname\", \"555844f2db9c7f4b25da6cb8277596de45021ef2\", \"a77ceb22aa03304b7de64ec43328974aeaca211c37dd29dcce4ae461bb80ca84\", \"my-value\"")
             },
       [&] (const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
@@ -688,7 +688,7 @@ name_firstupdate ()
 
   assert (prevNameOp.isNameOp ());
   if (prevNameOp.getNameOp () != OP_NAME_NEW)
-    throw JSONRPCError (RPC_TRANSACTION_ERROR, "previous tx is not name_new");
+    throw JSONRPCError (RPC_TRANSACTION_ERROR, "previous tx is not preregistername");
 
   if (!saltMatchesHash (name, rand, prevNameOp.getOpHash ()))
     throw JSONRPCError (RPC_TRANSACTION_ERROR, "rand value is wrong");

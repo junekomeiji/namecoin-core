@@ -353,8 +353,8 @@ const RPCResult NameOpResult{RPCResult::Type::OBJ, "nameOp", optional,
     "The encoded name-operation (if the script has one)",
     {
       {RPCResult::Type::STR, "op", "The type of operation"},
-      {RPCResult::Type::STR_HEX, "hash", optional, "Hash value for name_new"},
-      {RPCResult::Type::STR_HEX, "salt", optional, "Seed value for name_firstupdate"},
+      {RPCResult::Type::STR_HEX, "hash", optional, "Hash value for preregistername"},
+      {RPCResult::Type::STR_HEX, "salt", optional, "Seed value for registername"},
       {RPCResult::Type::STR, "name", optional, "Name for updates"},
       {RPCResult::Type::STR, "name_error", optional, "Encoding error for the name, if any"},
       {RPCResult::Type::STR, "name_encoding", optional, "Encoding of the name"},
@@ -864,7 +864,7 @@ name_pending ()
           switch (op.getNameOp ())
             {
             case OP_NAME_FIRSTUPDATE:
-              obj.pushKV ("op", "name_firstupdate");
+              obj.pushKV ("op", "registername");
               break;
             case OP_NAME_UPDATE:
               obj.pushKV ("op", "name_update");
@@ -892,7 +892,7 @@ namespace
  * CMutableTransaction.  This is used to share the code between the two
  * RPC methods.
  *
- * If a name_new is created and a salt value chosen, it will be placed
+ * If a preregistername is created and a salt value chosen, it will be placed
  * into the JSON output "result" already.
  */
 void
@@ -918,7 +918,7 @@ PerformNameRawtx (const unsigned nOut, const UniValue& nameOp,
      operations with arbitrary hex data.  */
   const UniValue NO_OPTIONS(UniValue::VOBJ);
 
-  if (op == "name_new")
+  if (op == "preregistername")
     {
       RPCTypeCheckObj (nameOp,
         {
@@ -947,7 +947,7 @@ PerformNameRawtx (const unsigned nOut, const UniValue& nameOp,
       script = CNameScript::buildNameNew (script, name, salt);
       result.pushKV ("salt", HexStr (salt));
     }
-  else if (op == "name_firstupdate")
+  else if (op == "registername")
     {
       RPCTypeCheckObj (nameOp,
         {
@@ -1004,7 +1004,7 @@ namerawtransaction ()
           {"vout", RPCArg::Type::NUM, RPCArg::Optional::NO, "The vout of the desired name output"},
           {"nameop", RPCArg::Type::OBJ, RPCArg::Optional::NO, "The name operation to create",
               {
-                  {"op", RPCArg::Type::STR, RPCArg::Optional::NO, "The operation to perform, can be \"name_new\", \"name_firstupdate\" and \"name_update\""},
+                  {"op", RPCArg::Type::STR, RPCArg::Optional::NO, "The operation to perform, can be \"preregistername\", \"registername\" and \"name_update\""},
                   {"name", RPCArg::Type::STR, RPCArg::Optional::NO, "The name to operate on"},
                   {"value", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "The new value for the name"},
                   {"salt", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "The nonce value to use for registrations"},
@@ -1014,12 +1014,12 @@ namerawtransaction ()
       RPCResult {RPCResult::Type::OBJ, "", "",
           {
               {RPCResult::Type::STR_HEX, "hex", "Hex string of the updated transaction"},
-              {RPCResult::Type::STR_HEX, "salt", /* optional */ true, "If this is a name_new, the nonce used to create it"},
+              {RPCResult::Type::STR_HEX, "salt", /* optional */ true, "If this is a preregistername, the nonce used to create it"},
           },
       },
       RPCExamples {
-          HelpExampleCli ("namerawtransaction", R"("raw txid hex" 1 "{\"op\":\"name_new\",\"name\":\"my-name\")")
-        + HelpExampleCli ("namerawtransaction", R"("raw txid hex" 1 "{\"op\":\"name_firstupdate\",\"name\":\"my-name\",\"value\":\"new value\",\"salt\":\"00112233\")")
+          HelpExampleCli ("namerawtransaction", R"("raw txid hex" 1 "{\"op\":\"preregistername\",\"name\":\"my-name\")")
+        + HelpExampleCli ("namerawtransaction", R"("raw txid hex" 1 "{\"op\":\"registername\",\"name\":\"my-name\",\"value\":\"new value\",\"salt\":\"00112233\")")
         + HelpExampleCli ("namerawtransaction", R"("raw txid hex" 1 "{\"op\":\"name_update\",\"name\":\"my-name\",\"value\":\"new value\")")
         + HelpExampleRpc ("namerawtransaction", R"("raw txid hex", 1, {"op":"name_update","name":"my-name","value":"new value"})")
       },
@@ -1051,7 +1051,7 @@ namepsbt ()
           {"vout", RPCArg::Type::NUM, RPCArg::Optional::NO, "The vout of the desired name output"},
           {"nameop", RPCArg::Type::OBJ, RPCArg::Optional::NO, "The name operation to create",
               {
-                  {"op", RPCArg::Type::STR, RPCArg::Optional::NO, "The operation to perform, can be \"name_new\", \"name_firstupdate\" and \"name_update\""},
+                  {"op", RPCArg::Type::STR, RPCArg::Optional::NO, "The operation to perform, can be \"preregistername\", \"registername\" and \"name_update\""},
                   {"name", RPCArg::Type::STR, RPCArg::Optional::NO, "The name to operate on"},
                   {"value", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "The new value for the name"},
                   {"salt", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "The nonce value to use for registrations"},
@@ -1061,12 +1061,12 @@ namepsbt ()
       RPCResult {RPCResult::Type::OBJ, "", "",
           {
               {RPCResult::Type::STR_HEX, "psbt", "The serialised, updated PSBT"},
-              {RPCResult::Type::STR_HEX, "salt", /* optional */ true, "If this is a name_new, the nonce used to create it"},
+              {RPCResult::Type::STR_HEX, "salt", /* optional */ true, "If this is a preregistername, the nonce used to create it"},
           },
       },
       RPCExamples {
-          HelpExampleCli ("namepsbt", R"("psbt" 1 "{\"op\":\"name_new\",\"name\":\"my-name\")")
-        + HelpExampleCli ("namepsbt", R"("psbt" 1 "{\"op\":\"name_firstupdate\",\"name\":\"my-name\",\"value\":\"new value\",\"salt\":\"00112233\")")
+          HelpExampleCli ("namepsbt", R"("psbt" 1 "{\"op\":\"preregistername\",\"name\":\"my-name\")")
+        + HelpExampleCli ("namepsbt", R"("psbt" 1 "{\"op\":\"registername\",\"name\":\"my-name\",\"value\":\"new value\",\"salt\":\"00112233\")")
         + HelpExampleCli ("namepsbt", R"("psbt" 1 "{\"op\":\"name_update\",\"name\":\"my-name\",\"value\":\"new value\")")
         + HelpExampleRpc ("namepsbt", R"("psbt", 1, {"op":"name_update","name":"my-name","value":"new value"})")
       },

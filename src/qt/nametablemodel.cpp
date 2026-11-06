@@ -223,7 +223,7 @@ public:
                         // The name will be ours when it confirms, but it
                         // wasn't ours before.
 
-                        if (op == "name_firstupdate")
+                        if (op == "registername")
                         {
                             // This is a registration, so the reason it wasn't
                             // ours before is that we hadn't registered it yet.
@@ -279,7 +279,7 @@ public:
                     // The name will be ours when it confirms, but it wasn't
                     // ours before.
 
-                    if (op == "name_firstupdate")
+                    if (op == "registername")
                     {
                         // This is a registration, so the reason it wasn't ours
                         // before is that we hadn't registered it yet.
@@ -498,7 +498,7 @@ QVariant NameTableModel::headerData(int section, Qt::Orientation orientation, in
                 return tr("Data associated with the name.");
 
             case ExpiresIn:
-                return tr("Number of blocks, after which the name will expire. Update name to renew it.\nEmpty cell means pending(awaiting automatic name_firstupdate or awaiting network confirmation).");
+                return tr("Number of blocks, after which the name will expire. Update name to renew it.\nEmpty cell means pending(awaiting automatic registername or awaiting network confirmation).");
         }
     }
     return QVariant();

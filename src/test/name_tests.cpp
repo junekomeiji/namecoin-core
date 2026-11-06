@@ -751,7 +751,7 @@ BOOST_AUTO_TEST_CASE (name_tx_verification)
   BOOST_CHECK (!CheckNameTransaction (mtx, 100012, viewClean, state, 0));
 }
 
-BOOST_AUTO_TEST_CASE (name_firstupdate_salt_length)
+BOOST_AUTO_TEST_CASE (registername_salt_length)
 {
   const valtype name = DecodeName ("x/test-name", NameEncoding::ASCII);
   const valtype value = DecodeName ("{}", NameEncoding::ASCII);
