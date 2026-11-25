@@ -189,7 +189,7 @@ listnames ()
       .withNameEncoding ()
       .withValueEncoding ();
 
-  return RPCMethod ("listnames",
+  return RPCMethod {"listnames",
       "Shows the status of all names in the wallet.\n",
       {
           {"name", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Only include this name"},
@@ -292,7 +292,7 @@ listnames ()
 
   return res;
 }
-  );
+    };
 }
 
 /**
@@ -377,7 +377,7 @@ preregistername ()
       .withArg ("allow_existing", RPCArg::Type::BOOL, "false",
                 "If set, then the preregistername is sent even if the name exists already");
 
-  return RPCMethod ("preregistername",
+  return RPCMethod {"preregistername",
       "Starts registration of the given name.  Must be followed up with registername to finish the registration."
           + HELP_REQUIRING_PASSPHRASE,
       {
@@ -461,7 +461,7 @@ preregistername ()
 
   return res;
 }
-  );
+    };
 }
 
 /* ************************************************************************** */
@@ -529,7 +529,7 @@ registername ()
       .withValueEncoding ()
       .withWriteOptions ();
 
-  return RPCMethod ("registername",
+  return RPCMethod {"registername",
             "Finishes the registration of a name.  Depends on preregistername being already issued."
                 + HELP_REQUIRING_PASSPHRASE,
             {
@@ -714,7 +714,7 @@ registername ()
 
   return txidVal;
 }
-  );
+    };
 }
 
 /* ************************************************************************** */

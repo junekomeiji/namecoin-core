@@ -665,7 +665,7 @@ scannameset ()
       .withArg ("regexp", RPCArg::Type::STR,
                 "Filter for names matching the regexp");
 
-  return RPCMethod ("scannameset",
+  return RPCMethod {"scannameset",
       "Lists names in the database.\n",
       {
           {"start", RPCArg::Type::STR, RPCArg::Default{""}, "Skip initially to this name"},
@@ -793,7 +793,7 @@ scannameset ()
 
   return res;
 }
-  );
+    };
 }
 
 /* ************************************************************************** */
