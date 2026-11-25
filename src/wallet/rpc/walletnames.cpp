@@ -728,7 +728,7 @@ updatename ()
       .withValueEncoding ()
       .withWriteOptions ();
 
-  return RPCMethod ("updatename",
+  return RPCMethod {"updatename",
       "Updates a name and possibly transfers it."
           + HELP_REQUIRING_PASSPHRASE,
       {
@@ -837,7 +837,7 @@ updatename ()
 
   return txidVal;
 }
-  );
+    };
 }
 
 /* ************************************************************************** */
